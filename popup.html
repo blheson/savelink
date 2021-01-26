@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body,
+        *,
+        html {
+            margin: 0;
+            box-sizing: content-box;
+        }
+
+        main {
+            margin: auto;
+            width: 330px;
+            padding: 1rem;
+            min-height: 100px
+        }
+
+        .btn {
+            margin: auto;
+            max-width: 200px;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            border: rgb(255 222 173)
+        }
+
+        .btnPrimary {
+            background-color: rgb(173, 104, 39);
+            color: rgb(255 255 255)
+        }
+
+        .btnSave {
+
+            background-color: rgb(82 177 180);
+            color: rgb(255 255 255)
+        }
+
+        .btnSecodnary {
+            background-color: #959394;
+            color: #fff
+        }
+
+        select,
+        input {
+            border: none;
+            height: 27px;
+            border-radius: 1rem;
+            width: 100%
+        }
+
+        :focus {
+            outline: none;
+        }
+
+        select:focus,
+        input:focus {
+            background-color: rgb(241, 241, 241);
+
+        }
+
+        label {
+            border: 1px solid rgb(225 225 225);
+            padding: 0.5rem;
+            border-radius: 0.5rem
+        }
+
+        .textCenter {
+            text-align: center;
+        }
+
+        .P {
+            background-color: #e6e6e6;
+            padding: 0.5rem;
+            overflow-y: hidden;
+            border-radius: 0.3rem
+        }
+
+        .row3 {
+            grid-auto-columns: 80px;
+            grid-auto-rows: 40px;
+            display: grid;
+            width: 240px;
+            gap: 5px;
+            grid-template-areas: "a a a";
+        }
+
+        .row2 {
+            grid-auto-columns: 160px;
+            grid-auto-rows: 53px;
+            display: grid;
+            width: 330px;
+            gap: 10px;
+            grid-template-areas: "a a"
+        }
+
+        hr {
+            margin: 1rem 0;
+        }
+
+        .row>div {
+            background-color: rgba(255, 220, 220, 0.253);
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div>
+            <h2 class="textCenter">Blim</h2>
+        </div>
+        <section id="saveLinkForm">
+
+
+            <div>
+                <div class="linkPreview textCenter"></div>
+                <hr>
+                <div class="row2 linkForm">
+                    <label for="">Title:
+                        <input type="text" name="title" placeholder="enter a title"></label>
+                    <label for="">Collection:
+                        <select name="collection" id="">
+                            <option value="DevOps">DevOps</option>
+                        </select></label>
+                    <label for="">Status:
+                        <select name="status" id="">
+                            <option value="Urgent">Urgent</option>
+                            <option value="Later">Later</option>
+                        </select></label>
+
+                    <label for="">Expiry Date: <input type="date" name="expire_at" value="">
+                    </label>
+
+                </div>
+                <hr>
+                <div class="textCenter row2">
+                    <button class="submitLinkForm btnSave btn">Save link</button>
+                    <button class="showList btnSecondary btn">Check Link</button>
+
+                </div>
+            </div>
+        </section>
+        <section id="linkList" style="display: none;">
+            <p class="textCenter">Saved Links</p>
+            <table>
+                <thead>
+                    <th>Title</th>
+                    <th>Collection</th>
+                    <th>expire_at</th>
+                </thead>
+                <tbody class="bodyList">
+                </tbody>
+            </table>
+            <hr>
+            <div class="textCenter">
+                <button class="backToForm btn btnPrimary">Back</button>
+                <button class="clearLink btn btnPrimary">Clear</button>
+            </div>
+            <div style="display: none;">
+                <tr class="bodyListRow">
+                    <td><span class="singLink"></span></td>
+                    <td><span class="singCollection"></span></td>
+                    <td><span class="singDate"></span></td>
+                </tr>
+            </div>
+        </section>
+    </main>
+
+</body>
+
+</html>
+<script src="assets/js/script.js">
+
+</script>

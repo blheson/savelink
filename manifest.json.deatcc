@@ -1,0 +1,19 @@
+{
+    "name": "Blim",
+    "version": "1.0",
+    "description": "Help manage stored links!",
+    "permissions": [
+        "tabs",
+        "declarativeContent",
+        "storage"
+    ],
+    "background": {
+        "service_worker": [
+            "background.js"
+        ]
+    },
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "manifest_version": 3
+}
