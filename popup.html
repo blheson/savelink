@@ -12,6 +12,44 @@
             margin: 0;
             box-sizing: content-box;
         }
+        .dBlock{
+            display: block!important;
+        }
+        table#linkTable {
+            max-height: 200px;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            display: block;
+        }
+
+        thead th {
+            color:
+                #227068
+        }
+
+        tr {
+            border-bottom: 1px solid rgb(171 192 205);
+            padding-bottom: 0.5rem;
+        }
+
+        td {
+            min-width: 100px;
+            height: 30px;
+        }
+
+        a {
+            text-align: center;
+            text-decoration: none;
+            color: rgb(34 112 104);
+        }
+
+        .linkPreview {
+            background-color: rgb(223 230 233);
+            overflow: hidden;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            word-break: break-all;
+        }
 
         main {
             margin: auto;
@@ -29,7 +67,12 @@
         }
 
         .btnPrimary {
-            background-color: rgb(173, 104, 39);
+            background-color: #2785ad;
+            color: rgb(255 255 255)
+        }
+
+        .btnDanger {
+            background-color: #ad2727;
             color: rgb(255 255 255)
         }
 
@@ -39,17 +82,21 @@
             color: rgb(255 255 255)
         }
 
-        .btnSecodnary {
-            background-color: #959394;
+        .btnSecondary {
+            background-color: #909090;
             color: #fff
         }
 
         select,
         input {
             border: none;
-            height: 27px;
-            border-radius: 1rem;
-            width: 100%
+  border-bottom: 1px solid;
+  height: 27px;
+  border-radius: 0.2rem;
+  width: 100%;
+  margin: 0;
+  background: rgb(242 242 242 / 58%);
+  padding: 0;
         }
 
         :focus {
@@ -62,9 +109,9 @@
 
         }
 
-        label {
+        label.stan {
             border: 1px solid rgb(225 225 225);
-            padding: 0.5rem;
+            padding: 0.3rem 0.5rem;
             border-radius: 0.5rem
         }
 
@@ -113,48 +160,83 @@
             width: 100%;
             overflow: auto;
         }
+
+        .popup {
+            position: relative;
+            margin: auto;
+            top: calc(50% - 45px);
+            width: 250px;
+            background: rgb(255 255 255);
+            padding: 2rem;
+            border-radius: 0.5rem
+        }
+
+        .addNewCollectionSection {
+            position: fixed;
+            height: 100%;
+            background: rgb(76 158 135 / 71%);
+            width: 100%;
+            top: 0;
+            right: 0;
+
+        }
+
+        .popClose {
+            background-color: rgb(255 255 255);
+            border: 2px solid rgb(153 153 153);
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            color: rgb(122, 122, 122);
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 0.8rem;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+        }
     </style>
 </head>
 
 <body>
     <main>
         <div>
-            <h2 class="textCenter">Blim</h2>
+            <div class="textenter">Blim</div>
         </div>
         <section id="saveLinkForm">
-
-
             <div>
                 <div class="linkPreview textCenter"></div>
                 <hr>
                 <div class="row2 linkForm">
-                    <label for="">Title:
+                    <label class="stan" for="">Title:
                         <input type="text" name="title" placeholder="enter a title"></label>
-                    <label for="">Collection:
+                    <label class="stan" for="">Collection:
                         <select name="collection" id="">
-                            <option value="DevOps">DevOps</option>
+                            <option value="addNew">add new + </option>
                         </select></label>
-                    <label for="">Status:
+                    <label class="stan" for="">Status:
                         <select name="status" id="">
                             <option value="Urgent">Urgent</option>
                             <option value="Later">Later</option>
                         </select></label>
 
-                    <label for="">Expiry Date: <input type="date" name="expire_at" value="">
+                    <label class="stan" for="">Expiry Date: <input type="date" name="expire_at" value="">
                     </label>
 
                 </div>
                 <hr>
                 <div class="textCenter row2">
-                    <button class="submitLinkForm btnSave btn">Save link</button>
+                    <button class="submitLinkForm btnSave btn">Save link + </button>
                     <button class="showList btnSecondary btn">Check Link</button>
 
                 </div>
             </div>
         </section>
-        <section id="linkList" style="display: none;">
-            <p class="textCenter">Saved Links</p>
-            <table>
+        <section id="linkList" style="display: none; ">
+            <h2 class="textCenter">Saved Links</h2>
+            <hr>
+            <table id="linkTable">
                 <thead>
                     <th>Title</th>
                     <th>Collection</th>
@@ -165,21 +247,26 @@
             </table>
             <hr>
             <div class="textCenter">
-                <button class="backToForm btn btnPrimary">Back</button>
-                <button class="clearLink btn btnPrimary">Clear</button>
+                <button class="backToForm btn btnSecondary">Back</button>
+                <button class="clearLink btn btnDanger">Clear</button>
+                <a href="collection.html">Col</a>
             </div>
-            <div style="display: none;">
-                <tr class="bodyListRow">
-                    <td><span class="singLink"></span></td>
-                    <td><span class="singCollection"></span></td>
-                    <td><span class="singDate"></span></td>
-                </tr>
+        </section>
+        <section class="addNewCollectionSection" style="display: none;">
+
+            <div class="popup">
+                <div class="popClose">x</div>
+                <div for="" class="textCenter">New Collection:</div>
+                <div class="textCenter dBlock">
+                    <input type="text" name="newCollection" value="" style="width:150px">
+                    <span class="textCenter">
+                        <button class="addCollectionBtn btn btnSave">+</button>
+                    </span>
+                 </div>
             </div>
         </section>
     </main>
-
 </body>
-
 </html>
 <script src="assets/js/script.js">
 
