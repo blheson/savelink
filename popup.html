@@ -12,19 +12,25 @@
             margin: 0;
             box-sizing: content-box;
         }
-        .dBlock{
-            display: block!important;
+
+        .dBlock {
+            display: block !important;
         }
+
         table#linkTable {
             max-height: 200px;
-            overflow-y: scroll;
-            overflow-x: hidden;
-            display: block;
+  overflow-x: scroll;
+  display: block;
+  width: 100%;
+  overflow-y: auto;
+  border-collapse: collapse;
+  border-spacing: 0;
         }
 
         thead th {
             color:
-                #227068
+                #227068;
+            text-align: left
         }
 
         tr {
@@ -34,7 +40,7 @@
 
         td {
             min-width: 100px;
-            height: 30px;
+            height: 37px
         }
 
         a {
@@ -72,7 +78,7 @@
         }
 
         .btnDanger {
-            background-color: #ad2727;
+            background-color: #f70606;
             color: rgb(255 255 255)
         }
 
@@ -90,13 +96,13 @@
         select,
         input {
             border: none;
-  border-bottom: 1px solid;
-  height: 27px;
-  border-radius: 0.2rem;
-  width: 100%;
-  margin: 0;
-  background: rgb(242 242 242 / 58%);
-  padding: 0;
+            border-bottom: 1px #52b1b4 solid;
+            height: 27px;
+            border-radius: 0.2rem;
+            width: 100%;
+            margin: 0;
+            background: rgb(242 242 242 / 58%);
+            padding: 0;
         }
 
         :focus {
@@ -149,17 +155,14 @@
         }
 
         .row>div {
-            background-color: rgba(255, 220, 220, 0.253);
+            background-color: rgba(255, 220, 220, 0.253)
         }
 
         button {
-            cursor: pointer;
+            cursor: pointer
         }
 
-        table {
-            width: 100%;
-            overflow: auto;
-        }
+   
 
         .popup {
             position: relative;
@@ -194,16 +197,54 @@
             font-size: 0.8rem;
             width: 20px;
             height: 20px;
+            text-align: center
+        }
+
+        .singClear {
+            border-radius: 2rem;
+            background-color: rgb(247 6 6);
+            color: rgb(255 255 255);
+            height: 12px;
+            width: 12px;
+            line-height: 0.9;
+            cursor: pointer;
+            display: block;
             text-align: center;
+        }
+
+        /* scrollbar */
+        /* width */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px #8080808c;
+            border-radius: 5px;
+        }
+
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+            background: rgb(144 144 144);
+            border-radius: 5px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+            background: #303030;
         }
     </style>
 </head>
 
 <body>
-    <main>
-        <div>
+    <header><div>
             <div class="textenter">Blim</div>
         </div>
+    </header>
+    <main>
+        
         <section id="saveLinkForm">
             <div>
                 <div class="linkPreview textCenter"></div>
@@ -213,7 +254,7 @@
                         <input type="text" name="title" placeholder="enter a title"></label>
                     <label class="stan" for="">Collection:
                         <select name="collection" id="">
-                            <option value="addNew">add new + </option>
+
                         </select></label>
                     <label class="stan" for="">Status:
                         <select name="status" id="">
@@ -240,7 +281,8 @@
                 <thead>
                     <th>Title</th>
                     <th>Collection</th>
-                    <th>expire_at</th>
+                    <th>Expire at</th>
+                    <th></th>
                 </thead>
                 <tbody class="bodyList">
                 </tbody>
@@ -262,11 +304,15 @@
                     <span class="textCenter">
                         <button class="addCollectionBtn btn btnSave">+</button>
                     </span>
-                 </div>
+                </div>
             </div>
         </section>
     </main>
+    <footer class="textCenter">
+        <a href="https://twitter.com/knight_b_u" target="_blank">Developed with love by Knight</a>
+    </footer>
 </body>
+
 </html>
 <script src="assets/js/script.js">
 
