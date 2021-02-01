@@ -11,7 +11,7 @@ const read = {
 const store = {
     _saveLink: function (data) {
         chrome.storage.sync.get(['link'], (result) => {
-            final = (typeof result.link == 'undefined') ? data : result.link.concat(data);
+            final = (typeof result.link == 'undefined') ? data : Object.assign(result.link, data);
             this.setLink(final);
         });
     },
@@ -51,18 +51,21 @@ const domData = {
         let singLink = document.createElement("td");
         let span = document.createElement("span");
         span.classList.add('singLink');
+        singLink.classList.add('tableField');
         singLink.appendChild(span)
 
         let singCollection = document.createElement("td");
         span = document.createElement("span");
         span.classList.add('singCollection');
+        singCollection.classList.add('tableField');
         singCollection.appendChild(span);
 
         let singDate = document.createElement("td");
         span = document.createElement("span");
         span.classList.add('singDate');
-        singDate.appendChild(span);
+        singDate.classList.add('tableField');
 
+        singDate.appendChild(span);
         let singClear = document.createElement("td");
         let div = document.createElement("div");
         div.classList.add('singClear');
@@ -111,26 +114,32 @@ const domData = {
 
         });
     },
-    fillTable: (tempNode, result) => {
+    fillTable: function (tempNode, result) {
 
         var fragment = new DocumentFragment();
         if (typeof result == 'undefined' || result.length < 1) {
             return
         }
-        let i = 0;
-        result.forEach(element => {
-            let template = tempNode.cloneNode(true);
-            let a = document.createElement("a");
-            a.href = element.link
-            a.innerText = element.title
-            a.setAttribute("target", "_blank")
-            template.querySelector(".singLink").appendChild(a)
-            template.querySelector(".singCollection").innerText = element.collection;
-            template.querySelector(".singDate").innerText = element.expire_at;
+        // let element = s(result);
+        return domData.checkObj(result, tempNode, fragment);
+    },
+    checkObj: (result, tempNode, fragment) => {
 
-            fragment.appendChild(template);
-            i++;
-        });
+        for (var key in result) {
+            if (result.hasOwnProperty(key)) {
+
+                let template = tempNode.cloneNode(true);
+                let a = document.createElement("a");
+                a.href = result[key].link
+                a.innerText = result[key].title;
+                a.classList.add('singTitle');
+                a.setAttribute("target", "_blank")
+                template.querySelector(".singLink").appendChild(a)
+                template.querySelector(".singCollection").innerText = result[key].collection;
+                template.querySelector(".singDate").innerText = result[key].expire_at;
+                fragment.appendChild(template);
+            }
+        }
         return fragment;
     }
 }
@@ -146,11 +155,9 @@ const init = () => {
 
         }
     );
-    console.log('init')
 }
 //UI section
 const UI = {
-
     showList: () => {
         document.querySelector("#linkList").style.display = "block";
         document.querySelector("#saveLinkForm").style.display = "none";
@@ -160,8 +167,7 @@ const UI = {
         document.querySelector("#saveLinkForm").style.display = "block";
     },
     linkTable: {
-        tBody: document.querySelector('.bodyList'),
-        tr: []
+        tBody: document.querySelector('.bodyList')
     },
     form: {
         saveLink: {
@@ -178,12 +184,10 @@ const UI = {
             pop.style.display = 'none';
         else
             pop.style.display = 'block'
-
-
     }
 }
 
-    //get form data
+//get form data
 const processForm = (link) => {
     let linkForm = document.querySelector(".linkForm");
     let collection = linkForm.querySelector("select[name=collection]").value;
@@ -193,13 +197,15 @@ const processForm = (link) => {
     if (expire_at.length < 1 || title.length < 2) {
         return false;
     }
-    return [{
+    let data = {}
+    data[title] = {
         collection,
         expire_at,
         link,
         status,
         title
-    }]
+    };
+    return data;
 }
 
 //submit link form
@@ -208,6 +214,7 @@ document.querySelector(".submitLinkForm").addEventListener("click", () => {
     let newData = processForm(read.newLink);
     if (newData) {
         store.saveLink(newData);
+
         setTimeout(() => {
             update.confirmUpdate();
         }, 100);
@@ -218,10 +225,7 @@ document.querySelector(".submitLinkForm").addEventListener("click", () => {
 document.querySelector(".showList").addEventListener("click", () => {
     domData.linkList();
     UI.showList();
-    // let bodyRow = UI.linkTable.tBody;
-
     UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');
-    dd();
 })
 
 //return to form
@@ -241,9 +245,6 @@ UI.form.saveLink.selectCollection.addEventListener("change", () => {
         UI.showPop();
     }
 })
-
-
-
 document.querySelector(".popClose").addEventListener("click", () => {
     UI.showPop();
 })
@@ -255,32 +256,43 @@ document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     } else
         alert('Proper collection name needed')
 })
-init();
 
-function dd ()
-{
-    // console.log('dd')
-
-    document.querySelectorAll('.bodyListRow').forEach((e)=>{
-        // UI.linkTable.tBody.querySelectorAll('.bodyListRow').forEach((e)=>{
-        console.log(e.querySelector('.singClear'))
-        e.querySelector('.singClear').addEventListener('click',()=>{
-            console.log(e.querySelector('.singTitle').innerText)
-            console.log('test')
+document.querySelector('.bodyList').addEventListener('click', (e) => {
+    let targetDom = e.target;
+    let tit = targetDom.parentNode.parentNode.querySelector(".singTitle").innerText;
+    // cc()
+    // cc(targetDom)
+    // cc(tit);
+    if (targetDom.classList.contains('singClear') && confirm('Delete?')) {
+        chrome.storage.sync.get('link', function (result) {
+            let link = result.link;
+            delete link[tit];
+            store.setLink(link)
+            domData.linkList();
         })
-    console.log('dd')
+   }
+})
 
-    })
-    // if (UI.linkTable.tr.length > 0){
-        // UI.linkTable.tr.forEach(eachTr => {
-        //     console.log(eachTr)
-        //     eachTr.querySelector('.singClear').addEventListener('click',()=>{
-        //         console.log(eachTr.querySelector('.singTitle').innerText)
-        //     })
-        // });
-    // }
+let cc = (data) => {
+    console.log(data)
 }
 
-document.querySelector('.bodyList').addEventListener('click',(e)=>{
-    console.log(e.target)
-})
+// function collectdata() {
+//     chrome.storage.sync.get('oldLink', function (result) {
+//         
+//         // result.link;
+//         // chrome.storage.sync.set({ oldLink: result.link }, function (params) {
+
+//         // })
+//     })
+// }
+// collectdata()
+function s(o, obj) {
+    for (var i in o) {
+        if (o.hasOwnProperty(i)) {
+            return o[i]
+        }
+    }
+
+}
+init()
