@@ -18,18 +18,18 @@
         }
 
         table#linkTable {
-            max-height: 200px;
-  overflow-x: scroll;
-  display: block;
-  width: 100%;
-  overflow-y: auto;
-  border-collapse: collapse;
-  border-spacing: 0;
+            max-height: 295px;
+            overflow-x: scroll;
+            display: block;
+            width: 100%;
+            overflow-y: auto;
+            border-collapse: collapse;
+            border-spacing: 0;
         }
 
         thead th {
-            color:
-                #227068;
+            color: #227068;
+            padding: 0.7rem 0;
             text-align: left
         }
 
@@ -38,15 +38,24 @@
             padding-bottom: 0.5rem;
         }
 
+        td {
+            min-width: 25px;
+        }
+
         td.tableField {
             min-width: 100px;
-            height: 37px
+            height: 43px
         }
 
         a {
             text-align: center;
             text-decoration: none;
             color: rgb(34 112 104);
+        }
+
+        .navBtn.active {
+            border-bottom: 3px solid rgb(82 177 180);
+            background-color: #fff
         }
 
         .linkPreview {
@@ -59,16 +68,21 @@
 
         main {
             margin: auto;
-            width: 330px;
+            height: 447px;
+            width: 268px;
             padding: 1rem;
             min-height: 100px
+        }
+
+        .navBtn {
+            border: rgb(255 222 173)
         }
 
         .btn {
             margin: auto;
             max-width: 200px;
             border-radius: 0.5rem;
-            padding: 0.5rem;
+            padding: 1.0rem;
             border: rgb(255 222 173)
         }
 
@@ -122,7 +136,7 @@
         }
 
         .textCenter {
-            text-align: center;
+            text-align: center
         }
 
         .P {
@@ -138,20 +152,31 @@
             display: grid;
             width: 240px;
             gap: 5px;
-            grid-template-areas: "a a a";
+            grid-template-areas: "a a a"
+        }
+
+        img.menuIcon {
+            width: 50px;
         }
 
         .row2 {
-            grid-auto-columns: 160px;
+            grid-auto-columns: 150px;
             grid-auto-rows: 53px;
             display: grid;
-            width: 330px;
-            gap: 10px;
+            width: 300px;
+            /* gap: 10px; */
             grid-template-areas: "a a"
         }
 
+        .row {
+            /* grid-auto-columns: 250px; */
+            display: grid;
+            gap: 10px;
+            grid-template-areas: "a"
+        }
+
         hr {
-            margin: 1rem 0;
+            margin: 1.4rem 0;
         }
 
         .row>div {
@@ -162,13 +187,15 @@
             cursor: pointer
         }
 
-   
+        tr.bodyListRow:nth-of-type(even) {
+            background-color: #efefef;
+        }
 
         .popup {
             position: relative;
             margin: auto;
             top: calc(50% - 45px);
-            width: 250px;
+            width: 193px;
             background: rgb(255 255 255);
             padding: 2rem;
             border-radius: 0.5rem
@@ -215,41 +242,62 @@
         /* scrollbar */
         /* width */
         ::-webkit-scrollbar {
-            width: 7px;
-            height: 7px;
+            width: 4px;
+            height: 4px;
         }
 
         /* Track */
         ::-webkit-scrollbar-track {
-            box-shadow: inset 0 0 5px #8080808c;
-            border-radius: 5px;
+            box-shadow: inset 0 0 5px #c9c9c98c;
+            border-radius: 5px
         }
 
         /* Handle */
         ::-webkit-scrollbar-thumb {
-            background: rgb(144 144 144);
+            background: #bababa;
             border-radius: 5px;
         }
 
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-            background: #303030;
+            background: #52b1b4
+        }
+
+        .slideIn {
+            animation-name: slideIn;
+            transition-timing-function: ease-in;
+            animation-fill-mode: both;
+            animation-duration: 300ms;
+        }
+
+        @keyframes slideIn {
+            0% {
+                /* opacity: 0; */
+                transform: translate3d(0, 1%, 0)
+            }
+
+            100% {
+                /* opacity: 1; */
+                transform: none
+            }
         }
     </style>
 </head>
 
 <body>
-    <header><div>
+    <header>
+        <div>
             <div class="textenter">Blim</div>
+            <hr>
         </div>
     </header>
     <main>
-        
-        <section id="saveLinkForm">
+
+        <section id="saveLinkForm" class="slideIn">
             <div>
                 <div class="linkPreview textCenter"></div>
                 <hr>
-                <div class="row2 linkForm">
+                <div class="row linkForm">
                     <label class="stan" for="">Title:
                         <input type="text" name="title" placeholder="enter a title"></label>
                     <label class="stan" for="">Collection:
@@ -267,16 +315,16 @@
 
                 </div>
                 <hr>
-                <div class="textCenter row2">
+                <div class="textCenter row">
                     <button class="submitLinkForm btnSave btn">Save link + </button>
-                    <button class="showList btnSecondary btn">Check Link</button>
+                    <!-- <button class="showList btnSecondary btn">Check Link</button> -->
 
                 </div>
             </div>
         </section>
-        <section id="linkList" style="display: none; ">
+        <section id="linkList" class="slideIn" style="display: none; ">
             <h2 class="textCenter">Saved Links</h2>
-            <hr>
+            <hr style="margin: 1rem 0;">
             <table id="linkTable">
                 <thead>
                     <th>Title</th>
@@ -289,9 +337,9 @@
             </table>
             <hr>
             <div class="textCenter">
-                <button class="backToForm btn btnSecondary">Back</button>
-                <button class="clearLink btn btnDanger">Clear</button>
-                <a href="collection.html">Col</a>
+                <!-- <button class="backToForm btn btnSecondary">Back</button> -->
+                <button class="clearLink btn btnDanger">Clear x</button>
+                <!-- <a href="collection.html">Col</a> -->
             </div>
         </section>
         <section class="addNewCollectionSection" style="display: none;">
@@ -309,7 +357,13 @@
         </section>
     </main>
     <footer class="textCenter">
-        <a href="https://twitter.com/knight_b_u" target="_blank">Developed with love by Knight</a>
+        <div class="row2">
+            <button class="backToForm navBtn active"><img class="menuIcon" src="assets/img/home.svg"
+                    alt="home"></button>
+            <button class="showList navBtn"><img class="menuIcon" src="assets/img/list.svg" alt="list"></button>
+            <!-- <button class="showList navBtn" style="background:#52b1b4; color: #fff;">List</button> -->
+        </div>
+        <!-- <a href="https://twitter.com/knight_b_u" target="_blank">Developed with love by Knight</a> -->
     </footer>
 </body>
 

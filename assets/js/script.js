@@ -9,11 +9,19 @@ const read = {
     newLink: ''
 }
 const store = {
-    _saveLink: function (data) {
-        chrome.storage.sync.get(['link'], (result) => {
-            final = (typeof result.link == 'undefined') ? data : Object.assign(result.link, data);
-            this.setLink(final);
-        });
+    _saveLink: function (data, title) {
+        // chrome.storage.sync.get(['link'], (result) => {
+        //     //does title exist
+        //     if (result.link.hasOwnProperty(title)) {
+        //         cc('false false')
+        //         return false;
+        //     } else {
+        //         final = (typeof result.link == 'undefined') ? data : Object.assign(result.link, data);
+        //         this.setLink(final);
+        //         cc('true true')
+        //         return true;
+        //     }
+        // });
     },
     get saveLink() {
         return this._saveLink;
@@ -23,10 +31,20 @@ const store = {
     },
     saveCollection: function (data) {
         chrome.storage.sync.get(['collection'], (result) => {
-            final = (typeof result.collection == 'undefined') ? data : result.collection.concat(data);
+            let collection = result.collection, final;
+            if (typeof collection == 'undefined') {
+                final = data
+            } else {
+                if (collection.includes(data)) {
+                    alert('collection exists')
+                    return
+                }
+                final = collection.concat(data)
+            }
+
             this.setCollection(final);
             domData.collectionOption();
-            UI.showPop();
+            UI.popDisplay();
         });
     },
     setLink: (data) => {
@@ -87,7 +105,11 @@ const domData = {
             let fragment = new DocumentFragment();
             result.collection.forEach(element => {
                 let option = document.createElement('option');
+                // let button = document.createElement('button');
+                // button.innerText='x';
+                // option.appendChild(button)
                 option.value = option.innerText = element;
+            
                 fragment.appendChild(option)
             });
             this.addOptions(fragment)
@@ -161,10 +183,14 @@ const UI = {
     showList: () => {
         document.querySelector("#linkList").style.display = "block";
         document.querySelector("#saveLinkForm").style.display = "none";
+        document.querySelector(".navBtn.active").classList.remove('active')
+        document.querySelector(".showList").classList.add('active')
     },
     backToForm: () => {
         document.querySelector("#linkList").style.display = "none";
         document.querySelector("#saveLinkForm").style.display = "block";
+        document.querySelector(".navBtn.active").classList.remove('active')
+        document.querySelector(".backToForm").classList.add('active')
     },
     linkTable: {
         tBody: document.querySelector('.bodyList')
@@ -178,7 +204,7 @@ const UI = {
         }
     },
 
-    showPop: () => {
+    popDisplay: () => {
         let pop = document.querySelector(".addNewCollectionSection");
         if ('block' == pop.style.display)
             pop.style.display = 'none';
@@ -205,7 +231,7 @@ const processForm = (link) => {
         status,
         title
     };
-    return data;
+    return [data, title];
 }
 
 //submit link form
@@ -213,12 +239,17 @@ const processForm = (link) => {
 document.querySelector(".submitLinkForm").addEventListener("click", () => {
     let newData = processForm(read.newLink);
     if (newData) {
-        store.saveLink(newData);
-
-        setTimeout(() => {
-            update.confirmUpdate();
-        }, 100);
-
+        // let res = store.saveLink(newData[0], newData[1]);
+        chrome.storage.sync.get(['link'], (result) => {
+            //does title exist
+            if (result.link.hasOwnProperty(newData[1])) {
+                alert('Title already exist')
+            } else {
+                final = (typeof result.link == 'undefined') ? newData[0] : Object.assign(result.link, newData[0]);
+                store.setLink(final);
+                update.confirmUpdate();
+            }
+        });
     } else alert("Please, fill in all fields");
 })
 //show list
@@ -242,17 +273,24 @@ document.querySelector(".clearLink").addEventListener("click", () => {
 UI.form.saveLink.selectCollection.addEventListener("change", () => {
     if (UI.form.saveLink.selectCollection.value == 'addNew') {
         //pop up collection   
-        UI.showPop();
+        UI.popDisplay();
     }
 })
 document.querySelector(".popClose").addEventListener("click", () => {
-    UI.showPop();
+    UI.popDisplay();
 })
 document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
-    if (newCollection.value.length > 1) {
-        store.saveCollection(newCollection.value);
-        UI.form.saveLink.selectCollection.value = newCollection.value
+    let col = newCollection.value;
+    let lowCase = newCollection.value.toLowerCase();
+    if (lowCase.length > 1) {
+        store.saveCollection(lowCase);
+        setTimeout(() => {
+            document.querySelector("select[name=collection]").querySelectorAll("option").forEach(e => {
+                if (lowCase == e.value) 
+                    e.setAttribute('selected','select')
+            });
+        }, 100);
     } else
         alert('Proper collection name needed')
 })
@@ -260,9 +298,6 @@ document.querySelector('.addCollectionBtn').addEventListener('click', () => {
 document.querySelector('.bodyList').addEventListener('click', (e) => {
     let targetDom = e.target;
     let tit = targetDom.parentNode.parentNode.querySelector(".singTitle").innerText;
-    // cc()
-    // cc(targetDom)
-    // cc(tit);
     if (targetDom.classList.contains('singClear') && confirm('Delete?')) {
         chrome.storage.sync.get('link', function (result) {
             let link = result.link;
@@ -270,7 +305,7 @@ document.querySelector('.bodyList').addEventListener('click', (e) => {
             store.setLink(link)
             domData.linkList();
         })
-   }
+    }
 })
 
 let cc = (data) => {
