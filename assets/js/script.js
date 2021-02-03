@@ -13,12 +13,11 @@ const store = {
         // chrome.storage.sync.get(['link'], (result) => {
         //     //does title exist
         //     if (result.link.hasOwnProperty(title)) {
-        //         cc('false false')
         //         return false;
         //     } else {
         //         final = (typeof result.link == 'undefined') ? data : Object.assign(result.link, data);
         //         this.setLink(final);
-        //         cc('true true')
+
         //         return true;
         //     }
         // });
@@ -36,7 +35,9 @@ const store = {
                 final = data
             } else {
                 if (collection.includes(data)) {
-                    alert('collection exists')
+                    middleware.info('Collection exist')
+
+                    // alrt('collection exists')
                     return
                 }
                 final = collection.concat(data)
@@ -62,6 +63,10 @@ const update = {
         UI.showList();
     }
 }
+/**
+ * Work with Dom
+ * @return node
+ */
 const domData = {
     tableRow: () => {
         let tr = document.createElement("tr");
@@ -109,7 +114,7 @@ const domData = {
                 // button.innerText='x';
                 // option.appendChild(button)
                 option.value = option.innerText = element;
-            
+
                 fragment.appendChild(option)
             });
             this.addOptions(fragment)
@@ -210,9 +215,40 @@ const UI = {
             pop.style.display = 'none';
         else
             pop.style.display = 'block'
+    },
+    popWarn: (warn)=>{
+       let warnDom = document.querySelector('.warn')
+        if('none'== warnDom.style.display){
+            warnDom.style.display = 'block';
+            warnDom.querySelector('.warntext').innerText = warn;
+        }else{
+            warnDom.style.display = 'none';
+            warnDom.querySelector('.warntext').innerText = warn;
+        }
+        
     }
 }
-
+const middleware = {
+    infoDom : document.querySelector('.info'),
+    info: function (info,status='error') {
+        this.infoDom.innerText = info;
+        this.infoDom.classList.add('fadeOut', status);
+        this.clear(status);
+    }
+    ,
+    clear: function (status) {
+        let info = this.infoDom;
+        setTimeout(() => {
+            info.innerText = '';
+            this.infoDom.classList.remove('fadeOut', status);
+        }, 3000);
+    }
+    ,
+    confirm: function(warn){
+        UI.popWarn(warn);
+        return true;
+    }
+}
 //get form data
 const processForm = (link) => {
     let linkForm = document.querySelector(".linkForm");
@@ -220,10 +256,16 @@ const processForm = (link) => {
     let title = linkForm.querySelector("input[name=title]").value;
     let status = linkForm.querySelector("select[name=status]").value;
     let expire_at = linkForm.querySelector("input[name=expire_at]").value;
-    if (expire_at.length < 1 || title.length < 2) {
-        return false;
-    }
-    let data = {}
+    let newDate = new Date();
+    if (expire_at.length < 1 || Date.parse(expire_at) <= newDate.getTime())
+        return 'Choose a future date';
+    if (title.length < 2)
+        return 'Choose a proper title';
+
+    if (collection == 'addNew')
+        return 'Choose a proper collection';
+
+    let data = {};
     data[title] = {
         collection,
         expire_at,
@@ -238,19 +280,24 @@ const processForm = (link) => {
 
 document.querySelector(".submitLinkForm").addEventListener("click", () => {
     let newData = processForm(read.newLink);
-    if (newData) {
+    if (typeof newData == 'object') {
         // let res = store.saveLink(newData[0], newData[1]);
         chrome.storage.sync.get(['link'], (result) => {
             //does title exist
             if (result.link.hasOwnProperty(newData[1])) {
-                alert('Title already exist')
+                middleware.info('Title already exist')
+                // alrt('Title already exist')
             } else {
                 final = (typeof result.link == 'undefined') ? newData[0] : Object.assign(result.link, newData[0]);
                 store.setLink(final);
                 update.confirmUpdate();
             }
         });
-    } else alert("Please, fill in all fields");
+    } else {
+
+        middleware.info(newData ? newData : 'Please, fill in all fields')
+        // alrt("Please, fill in all fields");
+    }
 })
 //show list
 document.querySelector(".showList").addEventListener("click", () => {
@@ -287,12 +334,14 @@ document.querySelector('.addCollectionBtn').addEventListener('click', () => {
         store.saveCollection(lowCase);
         setTimeout(() => {
             document.querySelector("select[name=collection]").querySelectorAll("option").forEach(e => {
-                if (lowCase == e.value) 
-                    e.setAttribute('selected','select')
+                if (lowCase == e.value)
+                    e.setAttribute('selected', 'select')
             });
         }, 100);
-    } else
-        alert('Proper collection name needed')
+    } else {
+        middleware.info('Proper collection name needed')
+    }
+    // alrt('Proper collection name needed')
 })
 
 document.querySelector('.bodyList').addEventListener('click', (e) => {

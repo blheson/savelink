@@ -11,6 +11,7 @@
         html {
             margin: 0;
             box-sizing: content-box;
+            overflow: hidden;
         }
 
         .dBlock {
@@ -57,6 +58,9 @@
             border-bottom: 3px solid rgb(82 177 180);
             background-color: #fff
         }
+        .navBtn:hover {
+            background-color: #f9f8f8
+        }
 
         .linkPreview {
             background-color: rgb(223 230 233);
@@ -68,7 +72,7 @@
 
         main {
             margin: auto;
-            height: 447px;
+            height: 425px;
             width: 268px;
             padding: 1rem;
             min-height: 100px
@@ -159,17 +163,27 @@
             width: 50px;
         }
 
+        img.logo {
+            width: 61px;
+            padding: 0.8rem;
+        }
+
         .row2 {
-            grid-auto-columns: 150px;
+            grid-auto-columns: 129px;
             grid-auto-rows: 53px;
             display: grid;
             width: 300px;
-            /* gap: 10px; */
+            gap: 10px;
             grid-template-areas: "a a"
         }
 
+        .menuRow2 {
+            grid-auto-columns: 150px !important;
+            gap: 0 !important
+        }
+
         .row {
-            /* grid-auto-columns: 250px; */
+            grid-auto-columns: 268px;
             display: grid;
             gap: 10px;
             grid-template-areas: "a"
@@ -180,7 +194,7 @@
         }
 
         .row>div {
-            background-color: rgba(255, 220, 220, 0.253)
+            background-color: rgba(255, 255, 255, 0.253)
         }
 
         button {
@@ -281,37 +295,72 @@
                 transform: none
             }
         }
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+              
+            }
+            80%{
+                opacity: 1
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        .info {
+            text-align: center;
+            padding-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .info.error{
+            color: rgb(255 0 0);
+        }
+        .info.success{
+            color: #8fe0da;
+        }
+        .info.fadeOut{
+            animation-name: fadeOut;
+            animation-duration: 2000ms;
+            transition-timing-function: ease-in;
+            animation-fill-mode: both;
+        }
     </style>
 </head>
 
 <body>
     <header>
         <div>
-            <div class="textenter">Blim</div>
-            <hr>
+            <div class="textenter"><img class="logo" src="assets/img/logo.svg" alt=""></div>
+            <hr style="margin: 1rem 0;">
         </div>
     </header>
     <main>
-
+        <section>
+            <div class="info"></div>
+        </section>
         <section id="saveLinkForm" class="slideIn">
             <div>
                 <div class="linkPreview textCenter"></div>
                 <hr>
                 <div class="row linkForm">
-                    <label class="stan" for="">Title:
-                        <input type="text" name="title" placeholder="enter a title"></label>
-                    <label class="stan" for="">Collection:
-                        <select name="collection" id="">
+                    <div class="row"><label class="stan" for="">Title:
+                            <input type="text" name="title" placeholder="enter a title"></label></div>
+                    <div class="row2">
+                        <label class="stan" for="">Collection:
+                            <select name="collection" id="">
 
-                        </select></label>
-                    <label class="stan" for="">Status:
-                        <select name="status" id="">
-                            <option value="Urgent">Urgent</option>
-                            <option value="Later">Later</option>
-                        </select></label>
+                            </select></label>
+                        <label class="stan" for="">Status:
+                            <select name="status" id="">
+                                <option value="Urgent">Urgent</option>
+                                <option value="Later">Later</option>
+                            </select></label></div>
+                    <div class="row"> <label class="stan" for="">Expiry Date: <input type="date" name="expire_at"
+                                value="">
+                        </label></div>
 
-                    <label class="stan" for="">Expiry Date: <input type="date" name="expire_at" value="">
-                    </label>
+
+
 
                 </div>
                 <hr>
@@ -323,8 +372,9 @@
             </div>
         </section>
         <section id="linkList" class="slideIn" style="display: none; ">
-            <h2 class="textCenter">Saved Links</h2>
-            <hr style="margin: 1rem 0;">
+
+            <!-- <h2 class="textCenter">Saved Links</h2> -->
+            <!-- <hr style="margin: 1rem 0;"> -->
             <table id="linkTable">
                 <thead>
                     <th>Title</th>
@@ -357,7 +407,7 @@
         </section>
     </main>
     <footer class="textCenter">
-        <div class="row2">
+        <div class="row2 menuRow2">
             <button class="backToForm navBtn active"><img class="menuIcon" src="assets/img/home.svg"
                     alt="home"></button>
             <button class="showList navBtn"><img class="menuIcon" src="assets/img/list.svg" alt="list"></button>
