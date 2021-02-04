@@ -4,18 +4,12 @@ const read = {
         chrome.storage.sync.get(['link'], (result) => {
             this.allLinks = result.link;
         });
-        // return resultLink;
     },
     syncCollections: function () {
         chrome.storage.sync.get(['collection'], (result) => {
             this.allCollections = result.collection;
-
-
         });
-
-        // return resultLink;
     },
-
     allLinks: []
     ,
     allCollections: [],
@@ -354,7 +348,6 @@ document.querySelector(".popClose").addEventListener("click", () => {
 //add a new collection
 document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
-    let col = newCollection.value;
     let lowCase = newCollection.value.toLowerCase();
     if (lowCase.length > 1) {
         store.saveCollection(lowCase);
