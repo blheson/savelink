@@ -9,7 +9,19 @@
       },
       "browser_action": {
         "default_title": "Google Mail",    
-        "default_popup": "popup.html"       
+        "default_popup": "popup.html",
+        "default_icon": {
+          "16": "assets/img/blim16.png",
+          "32": "assets/img/blim32.png",
+          "48": "assets/img/blim48.png",
+          "128": "assets/img/blim128.png"
+        }      
+      },
+      "icons": {
+        "16": "assets/img/blim16.png",
+        "32": "assets/img/blim32.png",
+        "48": "assets/img/blim48.png",
+        "128": "assets/img/blim128.png"
       },
     "manifest_version": 2
   }

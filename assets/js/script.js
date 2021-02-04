@@ -1,46 +1,49 @@
 
 const read = {
-    getLinks: () => {
-        chrome.storage.sync.get(['link'], function (result) {
-
+    syncLinks: function () {
+        chrome.storage.sync.get(['link'], (result) => {
+            this.allLinks = result.link;
         });
         // return resultLink;
+    },
+    syncCollections: function () {
+        chrome.storage.sync.get(['collection'], (result) => {
+            this.allCollections = result.collection;
+
+
+        });
+
+        // return resultLink;
+    },
+
+    allLinks: []
+    ,
+    allCollections: [],
+    getLinks: function () {
+        this.syncLinks()
+        return this.allLinks;
+    },
+    getCollections: function () {
+
+        this.syncCollections()
+        console.log(this.allCollections)
+        return this.allCollections;
     },
     newLink: ''
 }
 const store = {
-    _saveLink: function (data, title) {
-        // chrome.storage.sync.get(['link'], (result) => {
-        //     //does title exist
-        //     if (result.link.hasOwnProperty(title)) {
-        //         return false;
-        //     } else {
-        //         final = (typeof result.link == 'undefined') ? data : Object.assign(result.link, data);
-        //         this.setLink(final);
-
-        //         return true;
-        //     }
-        // });
-    },
-    get saveLink() {
-        return this._saveLink;
-    },
-    set saveLink(value) {
-        this._saveLink = value;
-    },
     saveCollection: function (data) {
+       
         chrome.storage.sync.get(['collection'], (result) => {
-            let collection = result.collection, final;
-            if (typeof collection == 'undefined') {
+            let resultCollection = result.collection, final;
+            if (typeof resultCollection == 'undefined') {
                 final = data
             } else {
-                if (collection.includes(data)) {
-                    middleware.info('Collection exist')
-
-                    // alrt('collection exists')
+                if (resultCollection.includes(data)) {
+                    middleware.collection.info('This collection already exist')
                     return
                 }
-                final = collection.concat(data)
+                final = resultCollection.concat(data)
             }
 
             this.setCollection(final);
@@ -68,27 +71,16 @@ const update = {
  * @return node
  */
 const domData = {
-    tableRow: () => {
+    tableRow: function () {
         let tr = document.createElement("tr");
 
-        let singLink = document.createElement("td");
-        let span = document.createElement("span");
-        span.classList.add('singLink');
-        singLink.classList.add('tableField');
-        singLink.appendChild(span)
+        let singLink = this.createTableRow('singLink')
 
-        let singCollection = document.createElement("td");
-        span = document.createElement("span");
-        span.classList.add('singCollection');
-        singCollection.classList.add('tableField');
-        singCollection.appendChild(span);
+        let singCollection = this.createTableRow('singCollection')
 
-        let singDate = document.createElement("td");
-        span = document.createElement("span");
-        span.classList.add('singDate');
-        singDate.classList.add('tableField');
+        let singDate = this.createTableRow('singDate')
+        let singStatus = this.createTableRow('singStatus')
 
-        singDate.appendChild(span);
         let singClear = document.createElement("td");
         let div = document.createElement("div");
         div.classList.add('singClear');
@@ -96,23 +88,32 @@ const domData = {
         singClear.appendChild(div);
 
         tr.classList.add('bodyListRow');
-        tr.append(singLink, singCollection, singDate, singClear);
+        tr.append(singLink, singCollection, singStatus, singDate, singClear);
         return tr;
     },
+    createTableRow: (className) => {
+        let td = document.createElement("td");
+        let span = document.createElement("span");
+        span.classList.add(className);
+        td.classList.add('tableField');
+        td.appendChild(span);
+        return td
+    }
+    ,
     collectionOption: function () {
         chrome.storage.sync.get('collection', (result) => {
-            if (typeof result == 'undefined' || result.collection.length < 1) {
-                chrome.storage.sync.set({ collection: ['finance', 'blog'] }, function () {
-                    result.collection = ['finance', 'blog'];
+            let resultCollection = result.collection
+         
+            if (typeof resultCollection == 'undefined' || resultCollection.length < 1) {
+                chrome.storage.sync.set({ collection: ['blog', 'finance'] }, function () {
+                    resultCollection = ['blog', 'finance'];
                 });
 
             }
             let fragment = new DocumentFragment();
-            result.collection.forEach(element => {
+            resultCollection.sort()
+            resultCollection.forEach(element => {
                 let option = document.createElement('option');
-                // let button = document.createElement('button');
-                // button.innerText='x';
-                // option.appendChild(button)
                 option.value = option.innerText = element;
 
                 fragment.appendChild(option)
@@ -133,11 +134,10 @@ const domData = {
         chrome.storage.sync.get(['link'], (result) => {
             document.querySelector(".bodyList").innerHTML = '';
             let res = fill(domData.tableRow(), result.link);
-            if (typeof res == 'object') {
+
+            if (typeof res == 'object')
                 document.querySelector(".bodyList").appendChild(res)
-            } else {
-                document.querySelector(".bodyList").innerHTML = 'No saved link';
-            }
+
 
         });
     },
@@ -147,26 +147,35 @@ const domData = {
         if (typeof result == 'undefined' || result.length < 1) {
             return
         }
-        // let element = s(result);
-        return domData.checkObj(result, tempNode, fragment);
+        return domData.checkObjMany(result, tempNode, fragment);
     },
-    checkObj: (result, tempNode, fragment) => {
+    checkObjMany: function (result, tempNode, fragment) {
+        let urgentFragment = new DocumentFragment();
+        let laterFragment = new DocumentFragment();
 
         for (var key in result) {
-            if (result.hasOwnProperty(key)) {
-
-                let template = tempNode.cloneNode(true);
-                let a = document.createElement("a");
-                a.href = result[key].link
-                a.innerText = result[key].title;
-                a.classList.add('singTitle');
-                a.setAttribute("target", "_blank")
-                template.querySelector(".singLink").appendChild(a)
-                template.querySelector(".singCollection").innerText = result[key].collection;
-                template.querySelector(".singDate").innerText = result[key].expire_at;
-                fragment.appendChild(template);
+            // if (result.hasOwnProperty(key)) {
+            if (result[key].status.toLowerCase() == 'urgent') {
+                urgentFragment.appendChild(this.divideTable(tempNode, result, key, fragment));
+            } else {
+                laterFragment.appendChild(this.divideTable(tempNode, result, key, fragment));
             }
         }
+        fragment.append(urgentFragment, laterFragment)
+        return fragment;
+    },
+    divideTable: function (tempNode, result, key, fragment) {
+        let template = tempNode.cloneNode(true);
+        let a = document.createElement("a");
+        a.href = result[key].link;
+        a.innerText = result[key].title;
+        a.classList.add('singTitle');
+        a.setAttribute("target", "_blank");
+        template.querySelector(".singLink").appendChild(a);
+        template.querySelector(".singCollection").innerText = result[key].collection;
+        template.querySelector(".singStatus").innerText = result[key].status;
+        template.querySelector(".singDate").innerText = result[key].expire_at;
+        fragment.appendChild(template);
         return fragment;
     }
 }
@@ -216,35 +225,43 @@ const UI = {
         else
             pop.style.display = 'block'
     },
-    popWarn: (warn)=>{
-       let warnDom = document.querySelector('.warn')
-        if('none'== warnDom.style.display){
+    popWarn: (warn) => {
+        let warnDom = document.querySelector('.warn')
+        if ('none' == warnDom.style.display) {
             warnDom.style.display = 'block';
             warnDom.querySelector('.warntext').innerText = warn;
-        }else{
+        } else {
             warnDom.style.display = 'none';
             warnDom.querySelector('.warntext').innerText = warn;
         }
-        
+
     }
 }
 const middleware = {
-    infoDom : document.querySelector('.info'),
-    info: function (info,status='error') {
+    infoDom: document.querySelector('.info'),
+    info: function (info, status = 'error') {
         this.infoDom.innerText = info;
         this.infoDom.classList.add('fadeOut', status);
-        this.clear(status);
+        this.clear(this.infoDom,status);
+    },
+    collection: {
+        infoDom: document.querySelector('.collectionInfo'),
+        info: function (info, status = 'error') {
+            this.infoDom.innerText = info;
+            this.infoDom.classList.add('fadeOut', status);
+            middleware.clear(this.infoDom, status);
+        }
     }
     ,
-    clear: function (status) {
-        let info = this.infoDom;
+    clear: function (info, status) {
+       
         setTimeout(() => {
             info.innerText = '';
-            this.infoDom.classList.remove('fadeOut', status);
+            info.classList.remove('fadeOut', status);
         }, 3000);
     }
     ,
-    confirm: function(warn){
+    confirm: function (warn) {
         UI.popWarn(warn);
         return true;
     }
@@ -283,15 +300,23 @@ document.querySelector(".submitLinkForm").addEventListener("click", () => {
     if (typeof newData == 'object') {
         // let res = store.saveLink(newData[0], newData[1]);
         chrome.storage.sync.get(['link'], (result) => {
+            let resultLink = result.link;
+            // if('undefined' == resultLink) {
+            //     final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+            //     store.setLink(final);
+            //     update.confirmUpdate();
+            //     middleware.info('Link saved successfully', 'success')
+            // }
             //does title exist
-            if (result.link.hasOwnProperty(newData[1])) {
+            if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
                 middleware.info('Title already exist')
-                // alrt('Title already exist')
             } else {
-                final = (typeof result.link == 'undefined') ? newData[0] : Object.assign(result.link, newData[0]);
+                final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
                 store.setLink(final);
                 update.confirmUpdate();
+                middleware.info('Link saved successfully', 'success')
             }
+
         });
     } else {
 
@@ -312,7 +337,7 @@ document.querySelector(".backToForm").addEventListener("click", () => {
 })
 document.querySelector(".clearLink").addEventListener("click", () => {
     if (confirm("DELETE ALL LINKS?")) {
-        chrome.storage.sync.clear(function () {
+        chrome.storage.sync.remove('link', function () {
             domData.linkList();
         });
     }
@@ -326,6 +351,7 @@ UI.form.saveLink.selectCollection.addEventListener("change", () => {
 document.querySelector(".popClose").addEventListener("click", () => {
     UI.popDisplay();
 })
+//add a new collection
 document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
     let col = newCollection.value;
@@ -339,15 +365,14 @@ document.querySelector('.addCollectionBtn').addEventListener('click', () => {
             });
         }, 100);
     } else {
-        middleware.info('Proper collection name needed')
+        middleware.info('Select a proper collection name')
     }
-    // alrt('Proper collection name needed')
 })
 
 document.querySelector('.bodyList').addEventListener('click', (e) => {
     let targetDom = e.target;
     let tit = targetDom.parentNode.parentNode.querySelector(".singTitle").innerText;
-    if (targetDom.classList.contains('singClear') && confirm('Delete?')) {
+    if (targetDom.classList.contains('singClear') && confirm('Do you want to delete link?')) {
         chrome.storage.sync.get('link', function (result) {
             let link = result.link;
             delete link[tit];
@@ -359,24 +384,5 @@ document.querySelector('.bodyList').addEventListener('click', (e) => {
 
 let cc = (data) => {
     console.log(data)
-}
-
-// function collectdata() {
-//     chrome.storage.sync.get('oldLink', function (result) {
-//         
-//         // result.link;
-//         // chrome.storage.sync.set({ oldLink: result.link }, function (params) {
-
-//         // })
-//     })
-// }
-// collectdata()
-function s(o, obj) {
-    for (var i in o) {
-        if (o.hasOwnProperty(i)) {
-            return o[i]
-        }
-    }
-
 }
 init()
