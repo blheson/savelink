@@ -12,9 +12,9 @@ const init = () => {
             document.querySelector(".linkPreview").innerText = read.newLink;
         }
     );
-    Helper.setFutureDate();
+    helper.setFutureDate();
     setTimeout(() => {
-        Listener.expire();
+        listener.expire();
     }, 500)
 
 }
@@ -41,7 +41,8 @@ const read = {
         this.syncCollections();
         return this.allCollections;
     },
-    newLink: ''
+    newLink: '',
+    listTableStatus: 'full'
 }
 const store = {
     saveCollection: function (data) {
@@ -78,19 +79,18 @@ const update = {
         UI.showList();
     }
 }
-const notification = {
-    showTable: () => {
-        UI.linkTable.tBody.innerHTML = '';
 
-        UI.linkTable.tBody.appendChild(domData.createExpireTable());
-        UI.showList();
-    }
-}
 /**
  * Work with Dom
  * @return node
  */
 const domData = {
+    setUpTable: function () {
+        if (read.listTableStatus == 'full')
+            this.linkList()
+        else
+            this.ExpiredLinkList();
+    },
     tableRow: function () {
         let tr = document.createElement("tr");
 
@@ -127,7 +127,14 @@ const domData = {
         return '';
     },
     createNotification: function () {
-        document.querySelector('.notification').innerHTML = `You have ${Object.keys(read.expireList).length} expired links. <button class="danger btnSm btnDanger notifyBtn">Check it out</button>`;
+        let listCount = Object.keys(read.expireList).length;
+        if (listCount > 0)
+            document.querySelector('.notification').innerHTML = `You have ${listCount} expired link(s). <button class="danger btnSm btnDanger notifyBtn">Check it out</button>`;
+    },
+    ExpiredLinkList: function () {
+        UI.linkTable.tBody.innerHTML = '';
+        UI.linkTable.tBody.appendChild(this.createExpireTable());
+        UI.showList();
     }
     ,
     collectionOption: function () {
@@ -285,30 +292,46 @@ const middleware = {
         return true;
     },
     dateCheck: (expire_at) => {
-        return Date.parse(expire_at) <= Helper.futureDate;
+        return Date.parse(expire_at) <= helper.futureDate;
     }
 }
-const Listener = {
+const listener = {
     expire: () => {
         let links = read.allLinks;
         let store = {};
         for (const link in links) {
             if (Object.hasOwnProperty.call(links, link)) {
                 const element = links[link];
-                if (middleware.dateCheck(element.expire_at)) {
+                if (middleware.dateCheck(element.expire_at) && element.status == 'urgent') 
                     store[link] = links[link];
-                }
+                
             }
         }
         if (store) {
-
             read.expireList = store
             domData.createNotification();
         }
+        
 
+    },
+    expireTable: (tit) => {
+        if (read.listTableStatus != 'full')
+            delete read.expireList[tit];
+    },
+    showNotification: () => {
+        if (Object.keys(read.expireList).length > 0)
+            domData.createNotification();
+        else
+        UI.notification.info.innerText=''
+    },
+    handleShowListButton: function () {
+        domData.linkList();
+        UI.showList();
+        this.showNotification()
+        UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');
     }
 }
-const Helper = {
+const helper = {
     futureDate: '',
     setFutureDate: function () {
         this.futureDate = (new Date()).getTime() + (1000 * 60 * 60 * 24 * 1)
@@ -325,7 +348,6 @@ const processForm = (link) => {
         return 'Choose a future date';
     if (title.length < 2)
         return 'Choose a proper title';
-
     if (collection == 'addNew')
         return 'Choose a proper collection';
 
@@ -339,15 +361,14 @@ const processForm = (link) => {
     };
     return [data, title];
 }
-
+//show expired link
 UI.notification.info.addEventListener('click', (e) => {
-    if (e.target.classList.contains('notifyBtn')){
-        notification.showTable();
+    if (e.target.classList.contains('notifyBtn')) {
+        read.listTableStatus = 'expire';
+        domData.ExpiredLinkList();
         UI.notification.info.innerText = 'Expired Links';
     }
-        
 })
-
 
 //submit link form
 document.querySelector('.submitLinkForm').addEventListener('click', () => {
@@ -369,17 +390,18 @@ document.querySelector('.submitLinkForm').addEventListener('click', () => {
         middleware.info(newData ? newData : 'Please, fill in all fields')
     }
 })
+
 //show list
 document.querySelector(".showList").addEventListener("click", () => {
-    domData.linkList();
-    UI.showList();
-    UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');
+    listener.handleShowListButton()
 })
 
-//return to form
+//return to form (home)
 document.querySelector(".backToForm").addEventListener("click", () => {
+    listener.showNotification()
     UI.backToForm()
 })
+
 document.querySelector(".clearLink").addEventListener("click", () => {
     if (confirm("DELETE ALL LINKS?")) {
         chrome.storage.sync.remove('link', function () {
@@ -387,18 +409,20 @@ document.querySelector(".clearLink").addEventListener("click", () => {
         });
     }
 })
+
+//save collection form
 UI.form.saveLink.selectCollection.addEventListener("change", () => {
     if (UI.form.saveLink.selectCollection.value == 'addNew') {
         //pop up collection   
         UI.popDisplay();
     }
 })
+
+//close collection form
 document.querySelector('.popClose').addEventListener('click', () => {
     UI.popDisplay();
 })
-// document.querySelector('button.notifyBtn').addEventListener('click',()=>{
 
-// })
 //add a new collection
 document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
@@ -416,7 +440,7 @@ document.querySelector('.addCollectionBtn').addEventListener('click', () => {
     }
 })
 
-// document.querySelector('.bodyList').addEventListener('click', (e) => {
+//delete link
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;
     let tit = targetDom.parentNode.parentNode.querySelector(".singTitle").innerText;
@@ -424,8 +448,9 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         chrome.storage.sync.get('link', function (result) {
             let link = result.link;
             delete link[tit];
-            store.setLink(link)
-            domData.linkList();
+            listener.expireTable(tit);
+            store.setLink(link);
+            domData.setUpTable();
         })
     }
 })
