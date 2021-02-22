@@ -15,9 +15,8 @@ chrome.tabs.onActivated.addListener((e) => {
   if (Object.keys(expire).length > 0) {
     chrome.browserAction.setBadgeText({ 'text': `${Object.keys(expire).length}` });
     chrome.browserAction.setBadgeBackgroundColor({ 'color': `red` });
-
   }
   else
-    chrome.browserAction.setBadgeText({ 'text': `` });
+    chrome.browserAction.setBadgeText({ 'text': '' });
 
 })

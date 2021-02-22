@@ -12,6 +12,7 @@ const read = {
     allLinks: []
     ,
     expireList: {},
+    formStatus: 'new',
     allCollections: [],
     getLinks: function () {
         this.syncLinks()
@@ -75,6 +76,7 @@ const domData = {
         else
             this.ExpiredLinkList();
     },
+
     tableRow: function () {
         let tr = document.createElement("tr");
 
@@ -86,10 +88,14 @@ const domData = {
         let singStatus = this.createTableRow('singStatus')
 
         let singClear = document.createElement("td");
-        let div = document.createElement("div");
-        div.classList.add('singClear');
-        div.innerText = 'x';
-        singClear.appendChild(div);
+        let edit = document.createElement("span");
+        edit.classList.add('singEdit', 'singIcon');
+        edit.innerText = 'i';
+        singClear.appendChild(edit);
+        let clear = document.createElement("span");
+        clear.classList.add('singClear', 'singIcon');
+        clear.innerText = 'x';
+        singClear.appendChild(clear);
 
         tr.classList.add('bodyListRow');
         tr.append(singLink, singCollection, singStatus, singDate, singClear);

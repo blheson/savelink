@@ -10,7 +10,7 @@ const init = async () => {
     chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
         function (tabs) {
             read.newLink = tabs[0].url;
-            document.querySelector(".linkPreview").innerText = read.newLink;
+            UI.form.linkPreview.innerText = read.newLink;
         }
     );
     helper.setFutureDate();
@@ -19,7 +19,7 @@ const init = async () => {
     }, 500)
 }
 const notification = {
-    expired : (store)=>{
+    expired: (store) => {
         if (store) {
             read.expireList = store
             domData.createNotification();
@@ -86,12 +86,17 @@ const UI = {
         tBody: document.querySelector('.bodyList')
     },
     form: {
+        linkPreview: document.querySelector(".linkPreview"),
         saveLink: {
-            selectCollection: document.querySelector("select[name=collection")
+            selectCollection: document.querySelector("select[name=collection"),
+            selectStatus: document.querySelector("select[name=status"),
+            titleInput: document.querySelector("input[name=title]"),
+            expireInput: document.querySelector("input[name=expire_at]")
         },
         saveCollection: {
             collectionInput: document.querySelector('input[name=newCollection]')
-        }
+        },
+
     },
 
     popDisplay: () => {
@@ -148,23 +153,44 @@ UI.notification.info.addEventListener('click', (e) => {
 
 //submit link form
 document.querySelector('.submitLinkForm').addEventListener('click', () => {
+
     let newData = processForm(read.newLink);
+
     if (typeof newData == 'object') {
-        chrome.storage.sync.get(['link'], (result) => {
-            let resultLink = result.link;
-            //does title exist
-            if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
-                middleware.info('Title already exist')
-            } else {
-                final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
-                store.setLink(final);
-                update.confirmUpdate();
-                middleware.info('Link saved successfully', 'success')
-            }
-        });
+        if (read.formStatus == 'new') {
+            chrome.storage.sync.get('link', (result) => {
+                let resultLink = result.link;
+                //does title exist
+                if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
+                    middleware.info('Title already exist')
+                } else {
+                    final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                    store.setLink(final);
+                    update.confirmUpdate();
+                    middleware.info('Link saved successfully', 'success')
+                }
+            });
+        } else {
+            chrome.storage.sync.get('link', (result) => {
+                let resultLink = result.link;
+
+                //does title exist
+                if (typeof resultLink == 'object') {
+                    delete resultLink[newData[0].title];
+
+                    final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                    store.setLink(final);
+                    update.confirmUpdate();
+                    middleware.info('Link saved successfully', 'success')
+                    read.formStatus = 'new'
+                    read.allLinks = ''
+                }
+            })
+        }
     } else {
         middleware.info(newData ? newData : 'Please, fill in all fields')
     }
+
 })
 
 //show list
@@ -228,6 +254,30 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
             store.setLink(link);
             domData.setUpTable();
         })
+    }
+    if (targetDom.classList.contains('singEdit') && confirm('Do you want to edit link?')) {
+        let link = targetDom.parentNode.parentNode.querySelector(".singTitle").href;
+        let expire = targetDom.parentNode.parentNode.querySelector(".singDate").innerText;
+        let collect = targetDom.parentNode.parentNode.querySelector(".singCollection").innerText;
+        let status = targetDom.parentNode.parentNode.querySelector(".singStatus").innerText;
+
+        UI.backToForm();
+        UI.form.linkPreview.innerText = link
+        UI.form.saveLink.titleInput.value = tit
+        UI.form.saveLink.titleInput.disabled = true
+        UI.form.saveLink.selectCollection.querySelectorAll("option").forEach(e => {
+            if (collect == e.value)
+                e.setAttribute('selected', 'select')
+        });
+        UI.form.saveLink.selectStatus.querySelectorAll("option").forEach(e => {
+            if (status == e.value)
+                e.setAttribute('selected', 'select')
+        });
+        read.formStatus = 'edit'
+        UI.form.saveLink.expireInput.value = expire;
+
+        UI.notification.info.innerText = 'Edit Link';
+        document.querySelector('.submitLinkForm').innerText = 'Edit Link +'
     }
 })
 
