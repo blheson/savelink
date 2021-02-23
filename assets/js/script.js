@@ -67,23 +67,36 @@ const update = {
 
 //UI section
 const UI = {
-    showList: () => {
-        document.querySelector("#linkList").style.display = "block";
-        document.querySelector("#saveLinkForm").style.display = "none";
+    showList: function(){
+        this.page.linkTable.style.display = "block";
+        this.page.linkForm.style.display = "none";
         document.querySelector(".navBtn.active").classList.remove('active')
-        document.querySelector(".showList").classList.add('active')
+        this.menuBtn.showList.classList.add('active')
     },
-    backToForm: () => {
-        document.querySelector("#linkList").style.display = "none";
-        document.querySelector("#saveLinkForm").style.display = "block";
+    menuBtn: {
+        showList:document.querySelector(".showList"),
+        saveLink:document.querySelector(".backToForm")
+    },
+    page:{
+        linkForm:document.querySelector("#saveLinkForm"),
+        linkTable:document.querySelector("#linkList")
+    },
+    collection:{
+        popClose: document.querySelector('.popClose'),
+        submitBtn: document.querySelector('.addCollectionBtn')
+    },
+    backToForm: function () {
+        this.page.linkTable.style.display = "none";
+        this.page.linkForm.style.display = "block";
         document.querySelector(".navBtn.active").classList.remove('active')
-        document.querySelector(".backToForm").classList.add('active')
+        this.menuBtn.saveLink.classList.add('active')
     },
     notification: {
         info: document.querySelector('.notification')
     },
     linkTable: {
-        tBody: document.querySelector('.bodyList')
+        tBody: document.querySelector('.bodyList'),
+        clearLink:document.querySelector(".clearLink")
     },
     form: {
         linkPreview: document.querySelector(".linkPreview"),
@@ -91,7 +104,8 @@ const UI = {
             selectCollection: document.querySelector("select[name=collection"),
             selectStatus: document.querySelector("select[name=status"),
             titleInput: document.querySelector("input[name=title]"),
-            expireInput: document.querySelector("input[name=expire_at]")
+            expireInput: document.querySelector("input[name=expire_at]"),
+            submitBtn : document.querySelector('.submitLinkForm')
         },
         saveCollection: {
             collectionInput: document.querySelector('input[name=newCollection]')
@@ -152,7 +166,7 @@ UI.notification.info.addEventListener('click', (e) => {
 })
 
 //submit link form
-document.querySelector('.submitLinkForm').addEventListener('click', () => {
+UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
     let newData = processForm(read.newLink);
 
@@ -194,17 +208,23 @@ document.querySelector('.submitLinkForm').addEventListener('click', () => {
 })
 
 //show list
-document.querySelector(".showList").addEventListener("click", () => {
+UI.menuBtn.showList.addEventListener("click", () => {
     listener.handleShowListButton()
+    UI.form.saveLink.submitBtn.innerText = 'Save Link +';
+    UI.notification.info.innerText = '';
+    read.formStatus = 'new'
+    UI.form.linkPreview.innerText = read.newLink
+    UI.form.saveLink.titleInput.value = ''
+    UI.form.saveLink.titleInput.disabled = false
 })
 
 //return to form (home)
-document.querySelector(".backToForm").addEventListener("click", () => {
+UI.menuBtn.saveLink.addEventListener("click", () => {
     listener.showNotification()
     UI.backToForm()
 })
 
-document.querySelector(".clearLink").addEventListener("click", () => {
+UI.linkTable.clearLink.addEventListener("click", () => {
     if (confirm("DELETE ALL LINKS?")) {
         chrome.storage.sync.remove('link', function () {
             domData.linkList();
@@ -221,21 +241,25 @@ UI.form.saveLink.selectCollection.addEventListener("change", () => {
 })
 
 //close collection form
-document.querySelector('.popClose').addEventListener('click', () => {
+UI.collection.popClose.addEventListener('click', () => {
     UI.popDisplay();
+    UI.form.saveLink.selectCollection.querySelector('option').selected = true
 })
 
 //add a new collection
-document.querySelector('.addCollectionBtn').addEventListener('click', () => {
+UI.collection.submitBtn.addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
     let lowCase = newCollection.value.toLowerCase();
     if (lowCase.length > 1) {
         store.saveCollection(lowCase);
         setTimeout(() => {
-            document.querySelector("select[name=collection]").querySelectorAll("option").forEach(e => {
-                if (lowCase == e.value)
-                    e.setAttribute('selected', 'select')
-            });
+  
+           let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`)
+           
+           UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`).removeAttribute('selected')
+
+            collectOption.selected = true;
+        
         }, 100);
     } else {
         middleware.info('Select a proper collection name')
@@ -265,19 +289,24 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         UI.form.linkPreview.innerText = link
         UI.form.saveLink.titleInput.value = tit
         UI.form.saveLink.titleInput.disabled = true
-        UI.form.saveLink.selectCollection.querySelectorAll("option").forEach(e => {
-            if (collect == e.value)
-                e.setAttribute('selected', 'select')
-        });
-        UI.form.saveLink.selectStatus.querySelectorAll("option").forEach(e => {
-            if (status == e.value)
-                e.setAttribute('selected', 'select')
-        });
+
+        let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`)
+        if(prev != null)
+        prev.removeAttribute('selected')
+
+        UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected= true
+        
+        prev = UI.form.saveLink.selectStatus.querySelector(`option[selected=select]`)
+        if(prev != null)
+        prev.removeAttribute('selected')
+
+        UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected= true
+        
         read.formStatus = 'edit'
         UI.form.saveLink.expireInput.value = expire;
 
         UI.notification.info.innerText = 'Edit Link';
-        document.querySelector('.submitLinkForm').innerText = 'Edit Link +'
+        UI.form.saveLink.submitBtn.innerText = 'Edit Link +'
     }
 })
 
