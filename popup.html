@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="assets/css/main.css">
     <style>
         body,
         *,
@@ -81,7 +82,7 @@
 
         main {
             margin: auto;
-            height: 425px;
+            height: 416px;
             width: 268px;
             padding: 1rem;
             min-height: 100px
@@ -107,10 +108,6 @@
             border: rgb(255 222 173)
         }
 
-        .btnPrimary {
-            background-color: #2785ad;
-            color: rgb(255 255 255)
-        }
 
         .btnDanger {
             background-color: #f70606;
@@ -120,6 +117,11 @@
         .btnSave {
 
             background-color: rgb(82 177 180);
+            color: rgb(255 255 255)
+        }
+
+        .btnPrimary {
+            background-color: #2785ad;
             color: rgb(255 255 255)
         }
 
@@ -257,12 +259,15 @@
             height: 20px;
             text-align: center
         }
-        .bodyListRow:hover{
-            background-color: #e4e4e4!important
+
+        .bodyListRow:hover {
+            background-color: #e4e4e4 !important
         }
+
         .bodyListRow:hover .singIcon {
             display: inline-block;
         }
+
         .singIcon {
             position: relative;
             top: 8px;
@@ -394,6 +399,9 @@
         <section>
             <div class="notification"></div>
             <div class="info"></div>
+            
+                <input class="d-none mb-2" type="text" name="search" id="" placeholder="search link title">
+            
         </section>
         <section id="saveLinkForm" class="slideIn">
             <div>
@@ -425,7 +433,7 @@
             </div>
         </section>
         <section id="linkList" class="slideIn" style="display: none; ">
-
+            
             <!-- <h2 class="textCenter">Saved Links</h2> -->
             <!-- <hr style="margin: 1rem 0;"> -->
             <table id="linkTable">
@@ -439,16 +447,15 @@
                 <tbody class="bodyList">
                 </tbody>
 
-                <!-- <tbody class="bodyList later">
-                </tbody> -->
+
             </table>
-            <hr>
-            <div class="textCenter">
+          
+            <div class="textCenter mt-2">
                 <!-- <button class="backToForm btn btnSecondary">Back</button> <a href="collection.html">Col</a>
                 <button class="clearLink btn btnDanger">Clear all links x</button>
                 --><span class="clearLink" style="color:rgb(218, 16, 16);cursor: pointer;">Clear all links x</span>
 
-            </div>
+            </div>  <hr>
         </section>
         <section class="addNewCollectionSection" style="display: none;">
 

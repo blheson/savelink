@@ -9,7 +9,7 @@ const init = async () => {
     //get tab link
     chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
         function (tabs) {
-            read.newLink = tabs[0].url;
+            read.newLink = tabs[0].url.length > 1 ? tabs[0].url: 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
         }
     );
@@ -67,27 +67,31 @@ const update = {
 
 //UI section
 const UI = {
-    showList: function(){
+    searchInput: document.querySelector("input[name=search]"),
+
+    showList: function () {
         this.page.linkTable.style.display = "block";
         this.page.linkForm.style.display = "none";
+        this.searchInput.classList.remove('d-none')
         document.querySelector(".navBtn.active").classList.remove('active')
         this.menuBtn.showList.classList.add('active')
     },
     menuBtn: {
-        showList:document.querySelector(".showList"),
-        saveLink:document.querySelector(".backToForm")
+        showList: document.querySelector(".showList"),
+        saveLink: document.querySelector(".backToForm")
     },
-    page:{
-        linkForm:document.querySelector("#saveLinkForm"),
-        linkTable:document.querySelector("#linkList")
+    page: {
+        linkForm: document.querySelector("#saveLinkForm"),
+        linkTable: document.querySelector("#linkList")
     },
-    collection:{
+    collection: {
         popClose: document.querySelector('.popClose'),
         submitBtn: document.querySelector('.addCollectionBtn')
     },
     backToForm: function () {
         this.page.linkTable.style.display = "none";
         this.page.linkForm.style.display = "block";
+        this,this.searchInput.classList.add('d-none');
         document.querySelector(".navBtn.active").classList.remove('active')
         this.menuBtn.saveLink.classList.add('active')
     },
@@ -96,7 +100,7 @@ const UI = {
     },
     linkTable: {
         tBody: document.querySelector('.bodyList'),
-        clearLink:document.querySelector(".clearLink")
+        clearLink: document.querySelector(".clearLink")
     },
     form: {
         linkPreview: document.querySelector(".linkPreview"),
@@ -105,7 +109,7 @@ const UI = {
             selectStatus: document.querySelector("select[name=status"),
             titleInput: document.querySelector("input[name=title]"),
             expireInput: document.querySelector("input[name=expire_at]"),
-            submitBtn : document.querySelector('.submitLinkForm')
+            submitBtn: document.querySelector('.submitLinkForm')
         },
         saveCollection: {
             collectionInput: document.querySelector('input[name=newCollection]')
@@ -132,15 +136,17 @@ const UI = {
 
     }
 }
-//get form data
+//get form data section
 const processForm = (link) => {
     let linkForm = document.querySelector(".linkForm");
     let collection = linkForm.querySelector("select[name=collection]").value;
     let title = linkForm.querySelector("input[name=title]").value;
     let status = linkForm.querySelector("select[name=status]").value;
     let expire_at = linkForm.querySelector("input[name=expire_at]").value;
-    if (expire_at.length < 1 || middleware.dateCheck(expire_at))
-        return 'Choose a future date';
+
+    //link validation 
+    // if (expire_at.length < 1 || middleware.dateCheck(expire_at))
+    //     return 'Choose a future date';
     if (title.length < 2)
         return 'Choose a proper title';
     if (collection == 'addNew')
@@ -165,12 +171,13 @@ UI.notification.info.addEventListener('click', (e) => {
     }
 })
 
-//submit link form
+//submit link form section
 UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
     let newData = processForm(read.newLink);
 
     if (typeof newData == 'object') {
+        //Check if you are adding new link
         if (read.formStatus == 'new') {
             chrome.storage.sync.get('link', (result) => {
                 let resultLink = result.link;
@@ -181,7 +188,9 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
                     final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
                     store.setLink(final);
                     update.confirmUpdate();
-                    middleware.info('Link saved successfully', 'success')
+                    middleware.info('Link saved successfully', 'success');
+                    read.allLinks = final
+                    domData.setBadgeState();
                 }
             });
         } else {
@@ -195,9 +204,10 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
                     final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
                     store.setLink(final);
                     update.confirmUpdate();
-                    middleware.info('Link saved successfully', 'success')
+                    middleware.info('Link updated successfully', 'success')
                     read.formStatus = 'new'
-                    read.allLinks = ''
+                    read.allLinks = final
+                    domData.setBadgeState();
                 }
             })
         }
@@ -207,21 +217,24 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
 })
 
-//show list
+//show list of links section
 UI.menuBtn.showList.addEventListener("click", () => {
     listener.handleShowListButton()
     UI.form.saveLink.submitBtn.innerText = 'Save Link +';
+    UI.form.saveLink.submitBtn.classList.remove('btnPrimary');
     UI.notification.info.innerText = '';
     read.formStatus = 'new'
     UI.form.linkPreview.innerText = read.newLink
     UI.form.saveLink.titleInput.value = ''
     UI.form.saveLink.titleInput.disabled = false
+
 })
 
 //return to form (home)
 UI.menuBtn.saveLink.addEventListener("click", () => {
-    listener.showNotification()
+    // listener.showNotification()
     UI.backToForm()
+    notification.expired(listener.expire())
 })
 
 UI.linkTable.clearLink.addEventListener("click", () => {
@@ -253,23 +266,26 @@ UI.collection.submitBtn.addEventListener('click', () => {
     if (lowCase.length > 1) {
         store.saveCollection(lowCase);
         setTimeout(() => {
-  
-           let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`)
-           
-           UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`).removeAttribute('selected')
+
+            let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`)
+
+            UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`).removeAttribute('selected')
 
             collectOption.selected = true;
-        
+
         }, 100);
     } else {
         middleware.info('Select a proper collection name')
     }
 })
 
-//delete link
+//delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;
     let tit = targetDom.parentNode.parentNode.querySelector(".singTitle").innerText;
+    /**
+     * Delete link
+     */
     if (targetDom.classList.contains('singClear') && confirm('Do you want to delete link?')) {
         chrome.storage.sync.get('link', function (result) {
             let link = result.link;
@@ -277,8 +293,13 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
             listener.expireTable(tit);
             store.setLink(link);
             domData.setUpTable();
+            read.allLinks = link;
+            domData.setBadgeState();
         })
     }
+    /**
+     * Edit link
+     */
     if (targetDom.classList.contains('singEdit') && confirm('Do you want to edit link?')) {
         let link = targetDom.parentNode.parentNode.querySelector(".singTitle").href;
         let expire = targetDom.parentNode.parentNode.querySelector(".singDate").innerText;
@@ -291,23 +312,48 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         UI.form.saveLink.titleInput.disabled = true
 
         let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`)
-        if(prev != null)
-        prev.removeAttribute('selected')
+        if (prev != null)
+            prev.removeAttribute('selected')
 
-        UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected= true
-        
+        UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected = true
+
         prev = UI.form.saveLink.selectStatus.querySelector(`option[selected=select]`)
-        if(prev != null)
-        prev.removeAttribute('selected')
+        if (prev != null)
+            prev.removeAttribute('selected')
 
-        UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected= true
-        
+        UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected = true
+
         read.formStatus = 'edit'
         UI.form.saveLink.expireInput.value = expire;
 
         UI.notification.info.innerText = 'Edit Link';
-        UI.form.saveLink.submitBtn.innerText = 'Edit Link +'
+        UI.form.saveLink.submitBtn.innerText = 'Edit Link +';
+        // UI.form.saveLink.submitBtn.style.backgroundColor = '#3390d9'
+        UI.form.saveLink.submitBtn.classList.add('btnPrimary');
     }
+})
+let timeout = null;
+UI.searchInput.addEventListener('keyup', (e) => {
+    // Clear the timeout if it has already been set.
+    // This will prevent the previous task from executing
+    // if it has been less than <MILLISECONDS>
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+        let cache = {};
+        let search = UI.searchInput.value.toLowerCase()
+        let allLinks = read.allLinks
+      
+            for (const key in allLinks) {
+                if (Object.hasOwnProperty.call(allLinks, key)) {
+                    const element = read.allLinks[key];
+                    if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search))
+                        cache[key] = element;
+                }
+            }
+        
+        // cache = allLinks
+        domData.searchLinkList(cache)
+    }, 500);
 })
 
 let cc = (data) => {

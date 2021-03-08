@@ -22,7 +22,7 @@ const read = {
         this.syncCollections();
         return this.allCollections;
     },
-    newLink: '',
+    newLink: null,
     listTableStatus: 'full'
 }
 const middleware = {
@@ -75,6 +75,19 @@ const domData = {
             this.linkList()
         else
             this.ExpiredLinkList();
+    },
+    setBadgeState: function () {//sync the current expired link to badge
+        expire = listener.expire()
+        let expiredLinkCount = Object.keys(expire).length;
+        if (expiredLinkCount > 0) {
+            chrome.browserAction.setBadgeText({ 'text': `${expiredLinkCount}` });
+            chrome.browserAction.setBadgeBackgroundColor({ 'color': `red` });
+        }
+        else
+            chrome.browserAction.setBadgeText({ 'text': '' });
+
+        console.log(`set: ${expiredLinkCount}`)
+        //alert(expiredLinkCount)
     },
 
     tableRow: function () {
@@ -156,16 +169,6 @@ const domData = {
         addNewOption.innerText = 'add new +';
         UI.form.saveLink.selectCollection.appendChild(addNewOption)
     },
-    linkList: function () {
-        let fill = this.fillTable;
-        chrome.storage.sync.get(['link'], (result) => {
-            document.querySelector(".bodyList").innerHTML = '';
-            let res = fill(domData.tableRow(), result.link);
-
-            if (typeof res == 'object')
-                document.querySelector(".bodyList").appendChild(res)
-        });
-    },
     fillTable: function (tempNode, result) {
 
         var fragment = new DocumentFragment();
@@ -174,6 +177,31 @@ const domData = {
         }
         return domData.checkObjMany(result, tempNode, fragment);
     },
+    appendListResult: function (data) {
+        UI.linkTable.tBody.innerHTML = ''
+        // document.querySelector(".bodyList").innerHTML = '';
+        let res = domData.fillTable(domData.tableRow(), data)
+        if (typeof res == 'object')
+            UI.linkTable.tBody.appendChild(res)
+    }
+    ,
+    linkList: function () {
+        // let fill = this.fillTable;
+        let appendListResult = this.appendListResult;
+        chrome.storage.sync.get('link', (result) => {
+
+
+            appendListResult(result.link)
+            // let res = fill(domData.tableRow(), result.link);
+
+            // if (typeof res == 'object')
+            //     document.querySelector(".bodyList").appendChild(res)
+        });
+    },
+    searchLinkList: function (data) {
+        this.appendListResult(data)
+    },
+
     checkObjMany: function (result, tempNode, fragment) {
         let urgentFragment = new DocumentFragment();
         let laterFragment = new DocumentFragment();
@@ -207,6 +235,8 @@ const domData = {
 
 const listener = {
     expire: () => {
+        // if (Object.keys(read.allLinks).length < 1)
+        //     read.syncLinks();
         let links = read.allLinks;
         let storeExpire = {};
         for (const link in links) {
@@ -233,5 +263,6 @@ const listener = {
         UI.showList();
         this.showNotification()
         UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');
+        notification.expired(listener.expire())
     }
 }

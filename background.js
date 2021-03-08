@@ -5,18 +5,10 @@ chrome.runtime.onInstalled.addListener(function () {
     }
   });
 });
-chrome.tabs.onActivated.addListener((e) => {
+chrome.tabs.onActivated.addListener(() => {
 
-  if (read.allLinks.length < 1)
+  // if (read.allLinks.length < 1)
+  // alert(Object.keys(read.allLinks).length)
     read.syncLinks();
-
-  expire = listener.expire()
-
-  if (Object.keys(expire).length > 0) {
-    chrome.browserAction.setBadgeText({ 'text': `${Object.keys(expire).length}` });
-    chrome.browserAction.setBadgeBackgroundColor({ 'color': `red` });
-  }
-  else
-    chrome.browserAction.setBadgeText({ 'text': '' });
-
+  domData.setBadgeState()
 })
