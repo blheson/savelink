@@ -268,9 +268,6 @@ UI.collection.submitBtn.addEventListener('click', () => {
         setTimeout(() => {
 
             let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`)
-
-            UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`).removeAttribute('selected')
-
             collectOption.selected = true;
 
         }, 100);
