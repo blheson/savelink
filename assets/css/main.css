@@ -10,7 +10,9 @@ html {
 .dBlock {
     display: block !important;
 }
-
+header{
+      max-height: 99px;
+}
 table#linkTable {
     max-height: 310px;
     overflow-x: scroll;
@@ -47,7 +49,9 @@ a {
     text-decoration: none;
     color: rgb(34 112 104);
 }
-
+.sync{
+    cursor: pointer
+}
 .navBtn.active {
     border-bottom: 3px solid rgb(82 177 180);
     background-color: #fff

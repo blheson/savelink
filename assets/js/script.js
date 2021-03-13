@@ -9,7 +9,7 @@ const init = async () => {
     //get tab link
     chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
         function (tabs) {
-            read.newLink = tabs[0].url.length > 1 ? tabs[0].url: 'loading...';
+            read.newLink = tabs[0].url.length > 1 ? tabs[0].url : 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
         }
     );
@@ -91,7 +91,7 @@ const UI = {
     backToForm: function () {
         this.page.linkTable.style.display = "none";
         this.page.linkForm.style.display = "block";
-        this,this.searchInput.classList.add('d-none');
+        this, this.searchInput.classList.add('d-none');
         document.querySelector(".navBtn.active").classList.remove('active')
         this.menuBtn.saveLink.classList.add('active')
     },
@@ -275,6 +275,23 @@ UI.collection.submitBtn.addEventListener('click', () => {
         middleware.info('Select a proper collection name')
     }
 })
+document.querySelector('.sync').addEventListener('click',()=>{
+    console.log('seen')
+    chrome.storage.sync.get(['link', 'collection'], (result) => {
+    let fd = new FormData();
+    fd.append('link',JSON.stringify(result.link));
+    fd.append('collection',result.collection);
+    $request = new Request(`http://localhost/landing-page/api/add-link.php`, {
+        method: 'post',
+        header:{
+            'Access-Control-Allow-Origin': 'http://localhost/landing-page/api/add-link.php'
+        },
+        body: fd
+    })
+    fetch($request);
+})
+})
+
 
 //delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
@@ -339,15 +356,15 @@ UI.searchInput.addEventListener('keyup', (e) => {
         let cache = {};
         let search = UI.searchInput.value.toLowerCase()
         let allLinks = read.allLinks
-      
-            for (const key in allLinks) {
-                if (Object.hasOwnProperty.call(allLinks, key)) {
-                    const element = read.allLinks[key];
-                    if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search))
-                        cache[key] = element;
-                }
+
+        for (const key in allLinks) {
+            if (Object.hasOwnProperty.call(allLinks, key)) {
+                const element = read.allLinks[key];
+                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search))
+                    cache[key] = element;
             }
-        
+        }
+
         // cache = allLinks
         domData.searchLinkList(cache)
     }, 500);
