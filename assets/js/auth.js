@@ -16,10 +16,10 @@ function createOauth2Uri() {
     // `
     return url;
 }
-function parseJwt (token) {
+function parseJwt(token) {
     var base64Url = token.split('.')[1];
     var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+    var jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     }).join(''));
 
@@ -29,52 +29,73 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // check if user is logged in on chrome
     if (request.message === 'check_status') {
 
-        return sendSignInRequest(sendResponse);
-   
-    } 
-    // {
-    //     console.log('chre.lastError.message');
+        sendSignInRequest(sendResponse);
 
-    // }
-return true;
+    }
+
+    return true;
 
 })
 
 function sendSignInRequest(sendResponse) {
-    chrome.identity.getProfileUserInfo((response) => {
-        if (response) { //also check if empty
-            if (chrome.runtime.lastError) {
-                sendResponse({ 'error': false, 'message': 'there was an error in the response' });
-                return;
-            }
+    chrome.storage.sync.get('user', function (result) {
 
-            sendResponse({ 'error': false, 'message': response.id });
+        if (result.user != undefined) {
+            sendResponse({ 'error': false, 'message': result.user })
+       
             return true;
         } else {
 
-            chrome.identity.launchWebAuthFlow({
-                url: createOauth2Uri(),
-                interactive: true
-            }, function (redirect_url) {
-                // console.log(redirect_url);
-                if (chrome.runtime.lastError)
-                    console.log(chrome.runtime.lastError.message);
-                let split_url = redirect_url.split('/#');
-                query = split_url.pop();
+           
+            chrome.identity.getProfileUserInfo((response) => {
+       
+                if (response.id.length > 1) { //also check if empty
+                    if (chrome.runtime.lastError) {
+                        sendResponse({ 'error': true, 'message': 'there was an error in the response' });
+                        return;
+                    }
+                   
+                    sendResponse({ 'error': false, 'message': response.id });
 
-                let token = (new URLSearchParams(query)).get('id_token');
-
-                let userInfo = parseJwt(token);
-                if (userInfo.aud === CLIENT_ID) {
-                    userSignIn = true;
-                    sendResponse({ 'error': false, 'message': userInfo.sub });
                 } else {
-                    sendResponse({ 'error': true, 'message': 'bad request' });
+                    
+                    chrome.identity.launchWebAuthFlow({
+                        url: createOauth2Uri(),
+                        interactive: true
+                    }, function (redirect_url) {
+                      
+                        if (chrome.runtime.lastError) {
+                            sendResponse({ 'error': true, 'message': chrome.runtime.lastError.message });
+                            return true;
+                        }
+
+                        if (typeof redirect_url === 'undefined') {
+                            sendResponse({ 'error': true, 'message': 'Sign in not successfull' });
+                            return true;
+                        }
+                        let split_url = redirect_url.split('/#');
+                        query = split_url.pop();
+
+                        let token = (new URLSearchParams(query)).get('id_token');
+
+                        let userInfo = parseJwt(token);
+
+                        chrome.storage.sync.set({ user: userInfo.sub });
+
+                        if (userInfo.aud === CLIENT_ID) {
+                            userSignIn = true;
+                            sendResponse({ 'error': false, 'message': userInfo.sub });
+                        } else {
+                            sendResponse({ 'error': true, 'message': 'bad request' });
+                        }
+                        return;
+                    });
+
                 }
+                return true;
             });
-
         }
-
     });
-    return;
+
+    return true;
 }

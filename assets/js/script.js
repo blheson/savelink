@@ -99,6 +99,7 @@ const UI = {
         info: document.querySelector('.notification')
     },
     linkTable: {
+        table: document.querySelector('table#linkTable'),
         tBody: document.querySelector('.bodyList'),
         clearLink: document.querySelector(".clearLink")
     },
@@ -276,49 +277,119 @@ UI.collection.submitBtn.addEventListener('click', () => {
     }
 })
 //Sync Section
-document.querySelector('.sync').addEventListener('click',()=>{
+document.querySelector('.sync').addEventListener('click', () => {
+    chrome.runtime.sendMessage({
+        message: 'check_status'
+    }, (response) => {
+        if (chrome.runtime.lastError || response.error) {
+            middleware.info('There was an error signing in', 'error');
+            return;
+        }
+   
+        chrome.storage.sync.get(['link', 'collection'], (result) => {
+            let link = JSON.stringify(result.link);
+
+        
+            if(typeof link === 'undefined' || Object.keys(result.link).length < 1){
+            middleware.info('No link available', 'error');
+            return true;
+        }
+            let fd = new FormData();
+            fd.append('link', link);
+            fd.append('collection', result.collection);
+            fd.append('user', response.message);
+            request = new Request(`http://localhost/landing-page/api/add-link.php`, {
+                method: 'post',
+                header: {
+                    'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+                },
+                body: fd
+            })
+            fetch(request).then(response => {
+                // console.log(response)
+                let res = response.json()
+                if (response.status !== 200) {
+                    throw new Error(res);
+                }
+                return res
+            }).then(result => {
+                // UI.notification.info.innerText = result.message;
+                middleware.info(result.message, 'success');
+
+            }).catch(error => {
+                middleware.info(error.message, 'error');
+
+            });
+        })
+    })
+
+
+})
+// retrieve section
+document.querySelector('.retrieve').addEventListener('click', () => {
     chrome.runtime.sendMessage({
         message:'check_status'
     },(response)=>{
-  
-        console.log(response)
-            chrome.storage.sync.get(['link', 'collection'], (result) => {
-    let fd = new FormData();
-    fd.append('link',JSON.stringify(result.link));
-    fd.append('collection',result.collection);
-    fd.append('user',response);
-    // fd.append('link','');
-    // fd.append('collection','');
-    request = new Request(`http://localhost/landing-page/api/add-link.php`, {
-        method: 'post',
-        header:{
-            'Access-Control-Allow-Origin': 'http://localhost/landing-page/api/add-link.php'
-        },
-        body: fd
-    })
-    fetch(request).then(response=>{
-        // console.log(response)
-        let res = response.json()
-        if(response.status !== 200)
-        {
-            throw new Error(res);
+        if (chrome.runtime.lastError || response.error) {
+            middleware.info('There was an error signing in', 'error');
+            return;
         }
-        return res
-    }).then(result=>{
-        // UI.notification.info.innerText = result.message;
-        middleware.info(result.message, 'success');
-       
-    }).catch(error=>{
-        middleware.info(error.message, 'error');
+
+    chrome.storage.sync.get(['link', 'collection'], (result) => {
+        let fd = new FormData();
+
+        fd.append('user', response.message);
+
+        request = new Request(`http://localhost/landing-page/api/retrieve-link.php`, {
+            method: 'post',
+            header: {
+                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+            },
+            body: fd
+        })
+        fetch(request).then(response => {
+
+            let res = response.json()
+         
+            if (response.status !== 200) 
+                throw new Error(res);
+   
+
+            return res
+        }).then(result => {
+            // UI.notification.info.innerText = result.message;
+            if(result.error){
+            throw new error(result.message)
+           
+        }
+
+   
+      
+    
+            let link = JSON.parse(result.message.link)
             
+            let collection = result.message.collection.split()
+            console.log( link )
+      
+           store.setCollection(collection)
+           store.setLink(link)
+            middleware.info('retrieve successful', 'success');
+
+        }).catch(error => {
+            middleware.info(error.message, 'error');
+
         });
-})
     })
-    console.log('seen')
+    })
+
 
 })
 
-
+//logout section
+document.querySelector('.logout').addEventListener('click',()=>{
+    chrome.storage.sync.remove('user');
+    middleware.info('Successfully logged out', 'success');
+})
 //delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;

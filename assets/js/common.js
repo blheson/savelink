@@ -150,6 +150,7 @@ const domData = {
 
             }
             let fragment = new DocumentFragment();
+           
             resultCollection.sort()
             resultCollection.forEach(element => {
                 let option = document.createElement('option');
@@ -182,6 +183,9 @@ const domData = {
         let res = domData.fillTable(domData.tableRow(), data)
         if (typeof res == 'object')
             UI.linkTable.tBody.appendChild(res)
+        else
+        UI.linkTable.table.innerHTML = '<div class="textCenter">No saved link</div>'
+
     }
     ,
     linkList: function () {

@@ -18,9 +18,10 @@ table#linkTable {
     overflow-x: scroll;
     display: block;
     width: 100%;
+    max-width : 268px;
     overflow-y: auto;
     border-collapse: collapse;
-    border-spacing: 0;
+    border-spacing: 0
 }
 
 thead th {
@@ -79,6 +80,7 @@ a {
 main {
     margin: auto;
     height: 416px;
+    
     padding: 1rem;
     min-height: 100px
 }
