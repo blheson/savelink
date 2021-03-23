@@ -275,21 +275,47 @@ UI.collection.submitBtn.addEventListener('click', () => {
         middleware.info('Select a proper collection name')
     }
 })
+//Sync Section
 document.querySelector('.sync').addEventListener('click',()=>{
-    console.log('seen')
-    chrome.storage.sync.get(['link', 'collection'], (result) => {
+    chrome.runtime.sendMessage({
+        message:'check_status'
+    },(response)=>{
+  
+        console.log(response)
+            chrome.storage.sync.get(['link', 'collection'], (result) => {
     let fd = new FormData();
     fd.append('link',JSON.stringify(result.link));
     fd.append('collection',result.collection);
-    $request = new Request(`http://localhost/landing-page/api/add-link.php`, {
+    fd.append('user',response);
+    // fd.append('link','');
+    // fd.append('collection','');
+    request = new Request(`http://localhost/landing-page/api/add-link.php`, {
         method: 'post',
         header:{
             'Access-Control-Allow-Origin': 'http://localhost/landing-page/api/add-link.php'
         },
         body: fd
     })
-    fetch($request);
+    fetch(request).then(response=>{
+        // console.log(response)
+        let res = response.json()
+        if(response.status !== 200)
+        {
+            throw new Error(res);
+        }
+        return res
+    }).then(result=>{
+        // UI.notification.info.innerText = result.message;
+        middleware.info(result.message, 'success');
+       
+    }).catch(error=>{
+        middleware.info(error.message, 'error');
+            
+        });
 })
+    })
+    console.log('seen')
+
 })
 
 

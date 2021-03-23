@@ -86,8 +86,7 @@ const domData = {
         else
             chrome.browserAction.setBadgeText({ 'text': '' });
 
-        console.log(`set: ${expiredLinkCount}`)
-        //alert(expiredLinkCount)
+        // console.log(`set: ${expiredLinkCount}`)
     },
 
     tableRow: function () {

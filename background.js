@@ -12,3 +12,5 @@ chrome.tabs.onActivated.addListener(() => {
     read.syncLinks();
   domData.setBadgeState()
 })
+
+

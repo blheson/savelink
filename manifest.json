@@ -6,11 +6,15 @@
     "tabs",
     "declarativeContent",
     "storage",
-    "unlimitedStorage"
+    "identity",
+    "unlimitedStorage",
+    "identity.email"
   ],
   "background": {
     "scripts": [
       "assets/js/common.js",
+      "assets/js/auth.js",
+      "assets/js/jwt-decode.js",
       "background.js"
     ],
     "persistent": false
@@ -32,5 +36,6 @@
     "48": "assets/img/blim48.png",
     "128": "assets/img/blim128.png"
   },
+"key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvn2TvIILxTJ5pElMCswcmwvs3hoIA31QC5bdGXVQV0UyGiURMlEJLFMv/wurmqmPfMomHw//TebYNhxuiJobfJ7+b/53Ka0KauZmUz1zfSB5yxbGZMG/okZgMwzlHHG0tfqH96RvfNBRgUq6VmIkvD5l3uK0Ixh3doflIg2SHgCIVRwGYy9xvgEbqTyR5T4RdV5FsOWICT7XX9er6XvgFUgIci8fvUBXJ/2FSf/7ECGm7rdvNkah42U7zK3AXh0+7CmWVtjLObRSWipjC0ZwjMFKtmtVDkmM+CWRMhVxrvZ4QQXPyD4zpv8vuBK6r8aqTLjoFnnq+vK+hRuOnU8kmwIDAQAB",
   "manifest_version": 2
 }
