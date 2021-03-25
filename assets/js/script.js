@@ -5,7 +5,7 @@ const init = async () => {
         read.syncLinks();
     //set up collection option
     domData.collectionOption();
-    domData.linkList();
+    // domData.linkList();
     //get tab link
     chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
         function (tabs) {
@@ -30,7 +30,7 @@ const notification = {
 const store = {
     saveCollection: function (data) {
 
-        chrome.storage.sync.get(['collection'], (result) => {
+        chrome.storage.sync.get('collection', (result) => {
             let resultCollection = result.collection, final;
             if (typeof resultCollection == 'undefined') {
                 final = data
@@ -63,12 +63,112 @@ const update = {
     }
 }
 
+const api = {
+    syncRequest: function (response) {
+        let syncFetch = this.syncFetch
+        let prepareSyncRequest = this.prepareSyncRequest
+        chrome.storage.sync.get(['link', 'collection'], (result) => {
+            let link = JSON.stringify(result.link);
+            if (typeof link === 'undefined' || Object.keys(result.link).length < 1) {
+                middleware.info('No link available', 'error');
+                return true;
+            }
+            let request = prepareSyncRequest(link, result.collection, response.message)
+            syncFetch(request);
+        });
+
+    },
+    prepareSyncRequest: (link, collection, userId) => {
+
+        let fd = new FormData();
+        fd.append('link', link);
+        fd.append('collection', collection);
+        fd.append('user', userId);
+        let request = new Request(`http://localhost/landing-page/api/add-link.php`, {
+            method: 'post',
+            header: {
+                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+            },
+            body: fd
+        });
+        return request;
+    }
+    ,
+    syncFetch: (request) => {
+
+        fetch(request).then(response => {
+            let res = response.json();
+            if (response.status !== 200) {
+                throw new Error(res);
+            }
+            return res;
+        }).then(result => {
+
+            middleware.info(result.message, 'success');
+
+        }).catch(error => {
+            middleware.info(error.message, 'error');
+
+        });
+    },
+    retrieveFetch: (request) => {
+        fetch(request).then(response => {
+
+            let result = response.json();
+
+            if (response.status !== 200)
+                throw new Error(result);
+
+            return result;
+        }).then(result => {
+
+
+            if (result.error)
+                throw new Error(result.message);
+
+
+
+            let link = JSON.parse(result.message.link);
+
+            let collection = result.message.collection.split(',');
+
+
+            store.setCollection(collection);
+            store.setLink(link);
+
+            middleware.info('retrieve successful', 'success');
+            domData.linkList();
+        }).catch((error) => {
+            middleware.info(error, 'error');
+        });
+    }
+    ,
+    retrieveRequest: function (response) {
+
+
+        let fd = new FormData();
+
+        fd.append('user', response.message);
+
+        let request = new Request(`http://localhost/landing-page/api/retrieve-link.php`, {
+            method: 'post',
+            header: {
+                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+            },
+            body: fd
+        });
+        this.retrieveFetch(request)
+
+
+    }
+}
+
 
 
 //UI section
 const UI = {
     searchInput: document.querySelector("input[name=search]"),
-
+    giveInfo: document.querySelector('.giveInfo'),
     showList: function () {
         this.page.linkTable.style.display = "block";
         this.page.linkForm.style.display = "none";
@@ -146,13 +246,13 @@ const processForm = (link) => {
     let expire_at = linkForm.querySelector("input[name=expire_at]").value;
 
     //link validation 
-    // if (expire_at.length < 1 || middleware.dateCheck(expire_at))
-    //     return 'Choose a future date';
+    if (expire_at.length < 1 || middleware.dateCheck(expire_at))
+        return 'Choose a future date';
     if (title.length < 2)
         return 'Choose a proper title';
     if (collection == 'addNew')
         return 'Choose a proper collection';
-
+console.log(link)
     let data = {};
     data[title] = {
         collection,
@@ -220,6 +320,7 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
 //show list of links section
 UI.menuBtn.showList.addEventListener("click", () => {
+    
     listener.handleShowListButton()
     UI.form.saveLink.submitBtn.innerText = 'Save Link +';
     UI.form.saveLink.submitBtn.classList.remove('btnPrimary');
@@ -236,12 +337,16 @@ UI.menuBtn.saveLink.addEventListener("click", () => {
     // listener.showNotification()
     UI.backToForm()
     notification.expired(listener.expire())
+    // read.tableStatus = false
+
 })
 
 UI.linkTable.clearLink.addEventListener("click", () => {
     if (confirm("DELETE ALL LINKS?")) {
         chrome.storage.sync.remove('link', function () {
+            read.allLinks = []
             domData.linkList();
+            domData.setBadgeState()
         });
     }
 })
@@ -285,42 +390,8 @@ document.querySelector('.sync').addEventListener('click', () => {
             middleware.info('There was an error signing in', 'error');
             return;
         }
-   
-        chrome.storage.sync.get(['link', 'collection'], (result) => {
-            let link = JSON.stringify(result.link);
 
-        
-            if(typeof link === 'undefined' || Object.keys(result.link).length < 1){
-            middleware.info('No link available', 'error');
-            return true;
-        }
-            let fd = new FormData();
-            fd.append('link', link);
-            fd.append('collection', result.collection);
-            fd.append('user', response.message);
-            request = new Request(`http://localhost/landing-page/api/add-link.php`, {
-                method: 'post',
-                header: {
-                    'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
-                },
-                body: fd
-            })
-            fetch(request).then(response => {
-                // console.log(response)
-                let res = response.json()
-                if (response.status !== 200) {
-                    throw new Error(res);
-                }
-                return res
-            }).then(result => {
-                // UI.notification.info.innerText = result.message;
-                middleware.info(result.message, 'success');
-
-            }).catch(error => {
-                middleware.info(error.message, 'error');
-
-            });
-        })
+        api.syncRequest(response);
     })
 
 
@@ -328,65 +399,21 @@ document.querySelector('.sync').addEventListener('click', () => {
 // retrieve section
 document.querySelector('.retrieve').addEventListener('click', () => {
     chrome.runtime.sendMessage({
-        message:'check_status'
-    },(response)=>{
+        message: 'check_status'
+    }, (response) => {
         if (chrome.runtime.lastError || response.error) {
             middleware.info('There was an error signing in', 'error');
             return;
         }
 
-    chrome.storage.sync.get(['link', 'collection'], (result) => {
-        let fd = new FormData();
-
-        fd.append('user', response.message);
-
-        request = new Request(`http://localhost/landing-page/api/retrieve-link.php`, {
-            method: 'post',
-            header: {
-                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
-            },
-            body: fd
-        })
-        fetch(request).then(response => {
-
-            let res = response.json()
-         
-            if (response.status !== 200) 
-                throw new Error(res);
-   
-
-            return res
-        }).then(result => {
-            // UI.notification.info.innerText = result.message;
-            if(result.error){
-            throw new error(result.message)
-           
-        }
-
-   
-      
-    
-            let link = JSON.parse(result.message.link)
-            
-            let collection = result.message.collection.split()
-            console.log( link )
-      
-           store.setCollection(collection)
-           store.setLink(link)
-            middleware.info('retrieve successful', 'success');
-
-        }).catch(error => {
-            middleware.info(error.message, 'error');
-
-        });
-    })
+        api.retrieveRequest(response);
     })
 
 
 })
 
 //logout section
-document.querySelector('.logout').addEventListener('click',()=>{
+document.querySelector('.logout').addEventListener('click', () => {
     chrome.storage.sync.remove('user');
     middleware.info('Successfully logged out', 'success');
 })
@@ -456,7 +483,7 @@ UI.searchInput.addEventListener('keyup', (e) => {
 
         for (const key in allLinks) {
             if (Object.hasOwnProperty.call(allLinks, key)) {
-                const element = read.allLinks[key];
+                const element = allLinks[key];
                 if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search))
                     cache[key] = element;
             }
@@ -471,3 +498,9 @@ let cc = (data) => {
     console.log(data)
 }
 init()
+
+
+
+
+
+

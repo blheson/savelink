@@ -7,8 +7,7 @@ chrome.runtime.onInstalled.addListener(function () {
 });
 chrome.tabs.onActivated.addListener(() => {
 
-  // if (read.allLinks.length < 1)
-  // alert(Object.keys(read.allLinks).length)
+
     read.syncLinks();
   domData.setBadgeState()
 })

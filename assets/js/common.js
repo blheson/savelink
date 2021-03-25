@@ -13,6 +13,7 @@ const read = {
     ,
     expireList: {},
     formStatus: 'new',
+    tableStatus: false,//true when link list is active
     allCollections: [],
     getLinks: function () {
         this.syncLinks()
@@ -150,7 +151,7 @@ const domData = {
 
             }
             let fragment = new DocumentFragment();
-           
+
             resultCollection.sort()
             resultCollection.forEach(element => {
                 let option = document.createElement('option');
@@ -181,18 +182,30 @@ const domData = {
         UI.linkTable.tBody.innerHTML = ''
         // document.querySelector(".bodyList").innerHTML = '';
         let res = domData.fillTable(domData.tableRow(), data)
-        if (typeof res == 'object')
+        if (typeof res == 'object') {
             UI.linkTable.tBody.appendChild(res)
-        else
-        UI.linkTable.table.innerHTML = '<div class="textCenter">No saved link</div>'
+            let noLink = UI.giveInfo.querySelector('.noLink')
+       
+            if (noLink) {
+                UI.giveInfo.removeChild(noLink)
+            }
+        } else {
+            let div = document.createElement('div');
+            div.classList.add('textCenter', 'noLink')
+            div.innerText = 'No saved link'
+       
+            UI.giveInfo.prepend(div)
+
+        }
+
 
     }
     ,
     linkList: function () {
         // let fill = this.fillTable;
         let appendListResult = this.appendListResult;
+        console.log(read.tableStatus)
         chrome.storage.sync.get('link', (result) => {
-
 
             appendListResult(result.link)
             // let res = fill(domData.tableRow(), result.link);
@@ -238,8 +251,7 @@ const domData = {
 
 const listener = {
     expire: () => {
-        // if (Object.keys(read.allLinks).length < 1)
-        //     read.syncLinks();
+  
         let links = read.allLinks;
         let storeExpire = {};
         for (const link in links) {
@@ -262,7 +274,13 @@ const listener = {
             UI.notification.info.innerText = ''
     },
     handleShowListButton: function () {
-        domData.linkList();
+        if (!read.tableStatus) {
+            domData.linkList();
+            read.tableStatus = true
+        }
+        // domData.linkList();
+        // read.tableStatus = true
+
         UI.showList();
         this.showNotification()
         UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');

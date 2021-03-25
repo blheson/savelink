@@ -393,17 +393,17 @@
             <span class="textenter"><img class="logo" src="assets/img/logo.svg" alt=""></span>
             <span style="display: flex;margin:1rem 0.5rem 0 auto;"><a class="credit"
                     href="https://twitter.com/knight_b_u" target="_blank">credit | feedback</a></span>
-                   
-        </div> 
+
+        </div>
         <hr style="margin: 1rem 0;">
     </header>
     <main>
         <section>
             <div class="notification"></div>
             <div class="info"></div>
-            
-                <input class="d-none mb-2" type="text" name="search" id="" placeholder="search link title">
-            
+
+            <input class="d-none mb-2" type="text" name="search" id="" placeholder="search link title">
+
         </section>
         <section id="saveLinkForm" class="slideIn">
             <div>
@@ -435,12 +435,15 @@
             </div>
         </section>
         <section id="linkList" class="slideIn" style="display: none; ">
-            <div class="sync">sync</div>
-            <hr>
-            <div class="retrieve">retrieve</div>
-            <hr>
-            <div class="logout">logout</div>
-            
+            <div style="overflow-y: scroll;height: 30px;">
+                <div class="sync">sync</div>
+                <hr>
+                <div class="retrieve">retrieve</div>
+                <hr>
+                <div class="logout">logout</div>
+            </div>
+
+
             <!-- <h2 class="textCenter">Saved Links</h2> -->
             <!-- <hr style="margin: 1rem 0;"> -->
             <table id="linkTable">
@@ -456,13 +459,13 @@
 
 
             </table>
-          
-            <div class="textCenter mt-2">
+
+            <div class="giveInfo textCenter mt-2">
                 <!-- <button class="backToForm btn btnSecondary">Back</button> <a href="collection.html">Col</a>
                 <button class="clearLink btn btnDanger">Clear all links x</button>
                 --><span class="clearLink" style="color:rgb(218, 16, 16);cursor: pointer;">Clear all links x</span>
 
-            </div>  
+            </div>
             <!-- <hr> -->
         </section>
         <section class="addNewCollectionSection" style="display: none;">
