@@ -12,7 +12,7 @@ const read = {
     allLinks: []
     ,
     expireList: {},
-    formStatus: 'new',
+    formStatus: 'new',//new, when adding new link
     tableStatus: false,//true when link list is active
     allCollections: [],
     getLinks: function () {
@@ -24,7 +24,9 @@ const read = {
         return this.allCollections;
     },
     newLink: null,
-    listTableStatus: 'full'
+    listTableStatus: 'full',
+    timeout : null,
+    contextMenuIdCache:[]
 }
 const middleware = {
     infoDom: document.querySelector('.info'),
@@ -87,7 +89,7 @@ const domData = {
         else
             chrome.browserAction.setBadgeText({ 'text': '' });
 
-        // console.log(`set: ${expiredLinkCount}`)
+      
     },
 
     tableRow: function () {
@@ -204,14 +206,11 @@ const domData = {
     linkList: function () {
         // let fill = this.fillTable;
         let appendListResult = this.appendListResult;
-        console.log(read.tableStatus)
+      
         chrome.storage.sync.get('link', (result) => {
 
             appendListResult(result.link)
-            // let res = fill(domData.tableRow(), result.link);
-
-            // if (typeof res == 'object')
-            //     document.querySelector(".bodyList").appendChild(res)
+         
         });
     },
     searchLinkList: function (data) {

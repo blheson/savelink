@@ -50,9 +50,10 @@ a {
     text-decoration: none;
     color: rgb(34 112 104);
 }
-.sync{
+.cloudLog{
     cursor: pointer
 }
+
 .navBtn.active {
     border-bottom: 3px solid rgb(82 177 180);
     background-color: #fff

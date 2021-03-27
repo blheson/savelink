@@ -1,6 +1,6 @@
 
 const init = async () => {
-
+ 
     if (read.allLinks.length < 1)
         read.syncLinks();
     //set up collection option
@@ -9,8 +9,11 @@ const init = async () => {
     //get tab link
     chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
         function (tabs) {
-            read.newLink = tabs[0].url.length > 1 ? tabs[0].url : 'loading...';
+            let tab = tabs[0]
+            read.newLink = tab.url.length > 1 ? tab.url : 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
+            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? tab.title : 'enter a title';
+          
         }
     );
     helper.setFutureDate();
@@ -48,12 +51,10 @@ const store = {
         });
     },
     setLink: (data) => {
-        chrome.storage.sync.set({ link: data }, function () {
-        });
+        chrome.storage.sync.set({ link: data });
     },
     setCollection: (data) => {
-        chrome.storage.sync.set({ collection: data }, function () {
-        });
+        chrome.storage.sync.set({ collection: data });
     }
 }
 const update = {
@@ -64,6 +65,8 @@ const update = {
 }
 
 const api = {
+    retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
+    syncEndpoint:'http://localhost/landing-page/api/add-link.php',
     syncRequest: function (response) {
         let syncFetch = this.syncFetch
         let prepareSyncRequest = this.prepareSyncRequest
@@ -78,16 +81,17 @@ const api = {
         });
 
     },
-    prepareSyncRequest: (link, collection, userId) => {
+    prepareSyncRequest:function (link, collection, userId) {
 
         let fd = new FormData();
         fd.append('link', link);
         fd.append('collection', collection);
         fd.append('user', userId);
-        let request = new Request(`http://localhost/landing-page/api/add-link.php`, {
+        console.log(api.syncEndpoint)
+        let request = new Request(api.syncEndpoint, {
             method: 'post',
             header: {
-                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+                'Access-Control-Allow-Origin': api.syncEndpoint
             },
             body: fd
         });
@@ -97,17 +101,20 @@ const api = {
     syncFetch: (request) => {
 
         fetch(request).then(response => {
-            let res = response.json();
+            let result = response.json();
+            
             if (response.status !== 200) {
-                throw new Error(res);
+                throw new Error(result.message);
             }
-            return res;
+            return result;
         }).then(result => {
+            if (result.error)
+            throw new Error(result.message);
 
             middleware.info(result.message, 'success');
 
         }).catch(error => {
-            middleware.info(error.message, 'error');
+            middleware.info(error, 'error');
 
         });
     },
@@ -115,9 +122,10 @@ const api = {
         fetch(request).then(response => {
 
             let result = response.json();
+            console.log(response.status)
 
             if (response.status !== 200)
-                throw new Error(result);
+                throw new Error(result.message);
 
             return result;
         }).then(result => {
@@ -137,7 +145,7 @@ const api = {
             store.setLink(link);
 
             middleware.info('retrieve successful', 'success');
-            domData.linkList();
+            domData.linkList();//reload table
         }).catch((error) => {
             middleware.info(error, 'error');
         });
@@ -150,10 +158,10 @@ const api = {
 
         fd.append('user', response.message);
 
-        let request = new Request(`http://localhost/landing-page/api/retrieve-link.php`, {
+        let request = new Request(api.retrieveEndpoint, {
             method: 'post',
             header: {
-                'Access-Control-Allow-Origin': 'http://localhost/landing-page/api'
+                'Access-Control-Allow-Origin': api.retrieveEndpoint
             },
             body: fd
         });
@@ -163,11 +171,11 @@ const api = {
     }
 }
 
-
-
 //UI section
 const UI = {
     searchInput: document.querySelector("input[name=search]"),
+    cloudLogBox: document.querySelector('.cloudLogBox'),
+    cloudLogMenu: document.querySelector('.cloudLogMenu'),
     giveInfo: document.querySelector('.giveInfo'),
     showList: function () {
         this.page.linkTable.style.display = "block";
@@ -176,6 +184,23 @@ const UI = {
         document.querySelector(".navBtn.active").classList.remove('active')
         this.menuBtn.showList.classList.add('active')
     },
+    waitCloudResponse: function (status) {
+        let span;
+        if(status){
+           span = document.createElement('span');
+
+        span.innerText = 'loading...'
+        span.classList.add('cloud-loading')
+        this.cloudLogBox.appendChild(span)
+        this.cloudLogMenu.style.display = 'none';
+        }else{
+            span = document.querySelector('.cloud-loading')
+        this.cloudLogBox.removeChild(span)
+        this.cloudLogMenu.style.display = '';
+        }
+        
+    }
+    ,
     menuBtn: {
         showList: document.querySelector(".showList"),
         saveLink: document.querySelector(".backToForm")
@@ -197,6 +222,11 @@ const UI = {
     },
     notification: {
         info: document.querySelector('.notification')
+    },
+    cloud:{
+        sync:document.querySelector('.sync'),
+        retrieve:document.querySelector('.retrieve'),
+        logout:document.querySelector('.logout')
     },
     linkTable: {
         table: document.querySelector('table#linkTable'),
@@ -252,7 +282,7 @@ const processForm = (link) => {
         return 'Choose a proper title';
     if (collection == 'addNew')
         return 'Choose a proper collection';
-console.log(link)
+ 
     let data = {};
     data[title] = {
         collection,
@@ -263,6 +293,11 @@ console.log(link)
     };
     return [data, title];
 }
+
+
+//
+//########## EVENT LISTENERS ############
+//
 //show expired link
 UI.notification.info.addEventListener('click', (e) => {
     if (e.target.classList.contains('notifyBtn')) {
@@ -320,7 +355,7 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
 //show list of links section
 UI.menuBtn.showList.addEventListener("click", () => {
-    
+
     listener.handleShowListButton()
     UI.form.saveLink.submitBtn.innerText = 'Save Link +';
     UI.form.saveLink.submitBtn.classList.remove('btnPrimary');
@@ -364,7 +399,7 @@ UI.collection.popClose.addEventListener('click', () => {
     UI.popDisplay();
     UI.form.saveLink.selectCollection.querySelector('option').selected = true
 })
-
+ 
 //add a new collection
 UI.collection.submitBtn.addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
@@ -382,14 +417,17 @@ UI.collection.submitBtn.addEventListener('click', () => {
     }
 })
 //Sync Section
-document.querySelector('.sync').addEventListener('click', () => {
+UI.cloud.sync.addEventListener('click', () => {
+    UI.waitCloudResponse(true)
     chrome.runtime.sendMessage({
         message: 'check_status'
     }, (response) => {
+        UI.waitCloudResponse(false)
         if (chrome.runtime.lastError || response.error) {
             middleware.info('There was an error signing in', 'error');
             return;
         }
+       
 
         api.syncRequest(response);
     })
@@ -397,24 +435,29 @@ document.querySelector('.sync').addEventListener('click', () => {
 
 })
 // retrieve section
-document.querySelector('.retrieve').addEventListener('click', () => {
+UI.cloud.retrieve.addEventListener('click', () => {
+    UI.waitCloudResponse(true)
+
     chrome.runtime.sendMessage({
         message: 'check_status'
     }, (response) => {
-        if (chrome.runtime.lastError || response.error) {
-            middleware.info('There was an error signing in', 'error');
+        UI.waitCloudResponse(false)
+
+        if (response.error) {
+            middleware.info(response.message, 'error');
             return;
         }
-
+ 
         api.retrieveRequest(response);
+        
     })
 
 
 })
 
 //logout section
-document.querySelector('.logout').addEventListener('click', () => {
-    chrome.storage.sync.remove('user');
+UI.cloud.logout.addEventListener('click', () => {
+
     middleware.info('Successfully logged out', 'success');
 })
 //delete and edit link section
@@ -470,13 +513,13 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         UI.form.saveLink.submitBtn.classList.add('btnPrimary');
     }
 })
-let timeout = null;
+
 UI.searchInput.addEventListener('keyup', (e) => {
     // Clear the timeout if it has already been set.
     // This will prevent the previous task from executing
     // if it has been less than <MILLISECONDS>
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
+    clearTimeout(read.timeout);
+    read.timeout = setTimeout(() => {
         let cache = {};
         let search = UI.searchInput.value.toLowerCase()
         let allLinks = read.allLinks
@@ -488,8 +531,7 @@ UI.searchInput.addEventListener('keyup', (e) => {
                     cache[key] = element;
             }
         }
-
-        // cache = allLinks
+ 
         domData.searchLinkList(cache)
     }, 500);
 })
@@ -498,6 +540,9 @@ let cc = (data) => {
     console.log(data)
 }
 init()
+function old(params) {
+    alert(params)
+}
 
 
 

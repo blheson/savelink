@@ -8,7 +8,8 @@
     "storage",
     "identity",
     "unlimitedStorage",
-    "identity.email"
+    "identity.email",
+    "contextMenus"
   ],
   "background": {
     "scripts": [
