@@ -14,8 +14,33 @@ const background = {
           function (tabs) {
 
             let newLink = tabs[0].url.length > 1 ? tabs[0].url : 'loading...';
-            // console.log(newLink)
-            console.log(tabs[0].title)
+            let title = tabs[0].title + ' - contextmenu'
+            let collection = 'contextmenu'
+            let status = 'urgent'
+            let expire_at = helper.parseDate(helper.getFutureDate(2));
+
+            let data = {};
+            data[title] = {
+              collection,
+              expire_at,
+              newLink,
+              status,
+              title
+            };
+       
+    
+            chrome.storage.sync.get('link', (result) => {
+              let resultLink = result.link;
+
+              if (typeof resultLink == 'object' && resultLink.hasOwnProperty(title)) {
+ 
+                return
+              }
+              final = helper.collectiveLink(resultLink, data)
+              chrome.storage.sync.set({ link: final });
+ 
+
+            })
 
           }
         );
@@ -23,23 +48,41 @@ const background = {
     }
 
   },
-  tab:{
-    activated:function(){
+  tab: {
+    activated: function () {
       chrome.tabs.onActivated.addListener(() => {
         read.syncLinks();
         domData.setBadgeState()
       })
     }
   },
-  runtime:{
-    onInstalled:()=>{
+  runtime: {
+    onInstalled: () => {
       chrome.runtime.onInstalled.addListener(function () {
         chrome.storage.sync.get('collection', function (result) {
           if (result.collection == null) {
-            chrome.storage.sync.set({ collection: ['blog', 'finance'] });
+            chrome.storage.sync.set({ collection: ['blog', 'finance', 'contextmenu'] });
           }
         });
       });
+    },
+
+    onMessage: () => {
+      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+        if (request.message === 'check_status') {
+          // check if user is logged in on chrome
+          auth.sendSignInRequest(sendResponse);
+
+        }
+        if (request.message === 'save_link_contextmenu') {
+          console.log(sender)
+        }
+
+
+        return true;
+
+      })
     }
   }
 }
@@ -48,3 +91,4 @@ background.contextMenu.create({ 'id': 'addLink', 'title': 'add url' })
 background.contextMenu.click();
 background.tab.activated();
 background.runtime.onInstalled();
+background.runtime.onMessage();

@@ -99,14 +99,4 @@ const auth = {
     }
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    // check if user is logged in on chrome
-    if (request.message === 'check_status') {
 
-        auth.sendSignInRequest(sendResponse);
-
-    }
-
-    return true;
-
-})

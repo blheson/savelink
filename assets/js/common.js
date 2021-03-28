@@ -63,9 +63,22 @@ const middleware = {
     }
 }
 const helper = {
-    futureDate: 0,
-    setFutureDate: function () {
-        this.futureDate = (new Date()).getTime() + (1000 * 60 * 60 * 24 * 1)
+    futureDate: 0,//for validation
+    calcFutureDate:function (day){
+        return (new Date()).getTime() + (1000 * 60 * 60 * 24 * day)
+    },
+    setFutureDate: function (day) {
+        this.futureDate = this.calcFutureDate(day)
+    },
+    getFutureDate: function(day){
+        return this.calcFutureDate(day)
+    },
+    collectiveLink:function(resultLink,link){
+        return (typeof resultLink == 'undefined') ? link : Object.assign(resultLink, link);
+    },
+    parseDate:function(time){
+        let date = new Date(time)
+        return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`     
     }
 }
 /**
@@ -286,3 +299,4 @@ const listener = {
         notification.expired(listener.expire())
     }
 }
+

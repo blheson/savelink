@@ -1,6 +1,6 @@
 
 const init = async () => {
- 
+
     if (read.allLinks.length < 1)
         read.syncLinks();
     //set up collection option
@@ -13,7 +13,7 @@ const init = async () => {
             read.newLink = tab.url.length > 1 ? tab.url : 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
             UI.form.saveLink.titleInput.value = tab.title.length > 1 ? tab.title : 'enter a title';
-          
+
         }
     );
     helper.setFutureDate();
@@ -63,10 +63,50 @@ const update = {
         UI.showList();
     }
 }
+const storage = {
+    link:(newData)=>{
+            //Check if you are adding new link
+            if (read.formStatus == 'new') {
+                chrome.storage.sync.get('link', (result) => {
+                    let resultLink = result.link;
+                    //does title exist
+                    if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
+                        middleware.info('Title already exist')
+                        return
+                    }
+                        // final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                        final = helper.collectiveLink(resultLink,newData[0])
+                        store.setLink(final);
+                        update.confirmUpdate();
+                        middleware.info('Link saved successfully', 'success');
+                        read.allLinks = final
+                        domData.setBadgeState();
+                    
+                });
+            } else {
+                chrome.storage.sync.get('link', (result) => {
+                    let resultLink = result.link;
+    
+                    //does title exist
+                    if (typeof resultLink == 'object') {
+                        delete resultLink[newData[0].title];
+    
+                        final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                        store.setLink(final);
+                        update.confirmUpdate();
+                        middleware.info('Link updated successfully', 'success')
+                        read.formStatus = 'new'
+                        read.allLinks = final
+                        domData.setBadgeState();
+                    }
+                })
+            }
+    },
 
+}
 const api = {
     retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
-    syncEndpoint:'http://localhost/landing-page/api/add-link.php',
+    syncEndpoint: 'http://localhost/landing-page/api/add-link.php',
     syncRequest: function (response) {
         let syncFetch = this.syncFetch
         let prepareSyncRequest = this.prepareSyncRequest
@@ -81,13 +121,13 @@ const api = {
         });
 
     },
-    prepareSyncRequest:function (link, collection, userId) {
+    prepareSyncRequest: function (link, collection, userId) {
 
         let fd = new FormData();
         fd.append('link', link);
         fd.append('collection', collection);
         fd.append('user', userId);
-        console.log(api.syncEndpoint)
+
         let request = new Request(api.syncEndpoint, {
             method: 'post',
             header: {
@@ -102,14 +142,14 @@ const api = {
 
         fetch(request).then(response => {
             let result = response.json();
-            
+
             if (response.status !== 200) {
                 throw new Error(result.message);
             }
             return result;
         }).then(result => {
             if (result.error)
-            throw new Error(result.message);
+                throw new Error(result.message);
 
             middleware.info(result.message, 'success');
 
@@ -122,7 +162,7 @@ const api = {
         fetch(request).then(response => {
 
             let result = response.json();
-            console.log(response.status)
+            // console.log(response.status)
 
             if (response.status !== 200)
                 throw new Error(result.message);
@@ -133,7 +173,6 @@ const api = {
 
             if (result.error)
                 throw new Error(result.message);
-
 
 
             let link = JSON.parse(result.message.link);
@@ -186,19 +225,19 @@ const UI = {
     },
     waitCloudResponse: function (status) {
         let span;
-        if(status){
-           span = document.createElement('span');
+        if (status) {
+            span = document.createElement('span');
 
-        span.innerText = 'loading...'
-        span.classList.add('cloud-loading')
-        this.cloudLogBox.appendChild(span)
-        this.cloudLogMenu.style.display = 'none';
-        }else{
+            span.innerText = 'loading...'
+            span.classList.add('cloud-loading')
+            this.cloudLogBox.appendChild(span)
+            this.cloudLogMenu.style.display = 'none';
+        } else {
             span = document.querySelector('.cloud-loading')
-        this.cloudLogBox.removeChild(span)
-        this.cloudLogMenu.style.display = '';
+            this.cloudLogBox.removeChild(span)
+            this.cloudLogMenu.style.display = '';
         }
-        
+
     }
     ,
     menuBtn: {
@@ -223,10 +262,10 @@ const UI = {
     notification: {
         info: document.querySelector('.notification')
     },
-    cloud:{
-        sync:document.querySelector('.sync'),
-        retrieve:document.querySelector('.retrieve'),
-        logout:document.querySelector('.logout')
+    cloud: {
+        sync: document.querySelector('.sync'),
+        retrieve: document.querySelector('.retrieve'),
+        logout: document.querySelector('.logout')
     },
     linkTable: {
         table: document.querySelector('table#linkTable'),
@@ -282,7 +321,7 @@ const processForm = (link) => {
         return 'Choose a proper title';
     if (collection == 'addNew')
         return 'Choose a proper collection';
- 
+
     let data = {};
     data[title] = {
         collection,
@@ -312,45 +351,9 @@ UI.form.saveLink.submitBtn.addEventListener('click', () => {
 
     let newData = processForm(read.newLink);
 
-    if (typeof newData == 'object') {
-        //Check if you are adding new link
-        if (read.formStatus == 'new') {
-            chrome.storage.sync.get('link', (result) => {
-                let resultLink = result.link;
-                //does title exist
-                if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
-                    middleware.info('Title already exist')
-                } else {
-                    final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
-                    store.setLink(final);
-                    update.confirmUpdate();
-                    middleware.info('Link saved successfully', 'success');
-                    read.allLinks = final
-                    domData.setBadgeState();
-                }
-            });
-        } else {
-            chrome.storage.sync.get('link', (result) => {
-                let resultLink = result.link;
-
-                //does title exist
-                if (typeof resultLink == 'object') {
-                    delete resultLink[newData[0].title];
-
-                    final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
-                    store.setLink(final);
-                    update.confirmUpdate();
-                    middleware.info('Link updated successfully', 'success')
-                    read.formStatus = 'new'
-                    read.allLinks = final
-                    domData.setBadgeState();
-                }
-            })
-        }
-    } else {
+    (typeof newData == 'object') ?
+        storage.link(newData) :
         middleware.info(newData ? newData : 'Please, fill in all fields')
-    }
-
 })
 
 //show list of links section
@@ -399,7 +402,7 @@ UI.collection.popClose.addEventListener('click', () => {
     UI.popDisplay();
     UI.form.saveLink.selectCollection.querySelector('option').selected = true
 })
- 
+
 //add a new collection
 UI.collection.submitBtn.addEventListener('click', () => {
     let newCollection = UI.form.saveCollection.collectionInput;
@@ -427,7 +430,7 @@ UI.cloud.sync.addEventListener('click', () => {
             middleware.info('There was an error signing in', 'error');
             return;
         }
-       
+
 
         api.syncRequest(response);
     })
@@ -441,15 +444,16 @@ UI.cloud.retrieve.addEventListener('click', () => {
     chrome.runtime.sendMessage({
         message: 'check_status'
     }, (response) => {
+       
         UI.waitCloudResponse(false)
 
         if (response.error) {
             middleware.info(response.message, 'error');
             return;
         }
- 
+
         api.retrieveRequest(response);
-        
+
     })
 
 
@@ -457,7 +461,7 @@ UI.cloud.retrieve.addEventListener('click', () => {
 
 //logout section
 UI.cloud.logout.addEventListener('click', () => {
-
+    chrome.storage.sync.remove('user')
     middleware.info('Successfully logged out', 'success');
 })
 //delete and edit link section
@@ -531,21 +535,9 @@ UI.searchInput.addEventListener('keyup', (e) => {
                     cache[key] = element;
             }
         }
- 
+
         domData.searchLinkList(cache)
     }, 500);
 })
 
-let cc = (data) => {
-    console.log(data)
-}
 init()
-function old(params) {
-    alert(params)
-}
-
-
-
-
-
-
