@@ -72,8 +72,7 @@ const auth = {
                             }
 
                             let userInfo = auth.parseUrl(redirect_url)
-// console.log(userInfo)
-// console.log(typeof userInfo)
+ 
                             if(typeof userInfo != 'object'){
                                 sendResponse({ 'error': true, 'message': 'User info not available' });
                                 return true;
@@ -98,5 +97,3 @@ const auth = {
         return true;//not
     }
 }
-
-

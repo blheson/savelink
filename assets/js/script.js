@@ -12,11 +12,12 @@ const init = async () => {
             let tab = tabs[0]
             read.newLink = tab.url.length > 1 ? tab.url : 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
-            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? tab.title : 'enter a title';
+            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? //tab.title : 'enter a title';
+                helper.parseTitle(tab.title) : 'enter a title';
 
         }
     );
-    helper.setFutureDate();
+    helper.setFutureDate(1);
     setTimeout(() => {
         notification.expired(listener.expire())
     }, 500)
@@ -64,49 +65,54 @@ const update = {
     }
 }
 const storage = {
-    link:(newData)=>{
-            //Check if you are adding new link
-            if (read.formStatus == 'new') {
-                chrome.storage.sync.get('link', (result) => {
-                    let resultLink = result.link;
-                    //does title exist
-                    if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
-                        middleware.info('Title already exist')
-                        return
-                    }
-                        // final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
-                        final = helper.collectiveLink(resultLink,newData[0])
-                        store.setLink(final);
-                        update.confirmUpdate();
-                        middleware.info('Link saved successfully', 'success');
-                        read.allLinks = final
-                        domData.setBadgeState();
-                    
-                });
-            } else {
-                chrome.storage.sync.get('link', (result) => {
-                    let resultLink = result.link;
-    
-                    //does title exist
-                    if (typeof resultLink == 'object') {
-                        delete resultLink[newData[0].title];
-    
-                        final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
-                        store.setLink(final);
-                        update.confirmUpdate();
-                        middleware.info('Link updated successfully', 'success')
-                        read.formStatus = 'new'
-                        read.allLinks = final
-                        domData.setBadgeState();
-                    }
-                })
-            }
+    link: (newData) => {
+        //    console.log( read.formStatus )
+        //    console.log( newData )
+        //     return;
+        //Check if you are adding new link
+        if (read.formStatus == 'new') {
+            chrome.storage.sync.get('link', (result) => {
+                let resultLink = result.link;
+                //does title exist
+                if (typeof resultLink == 'object' && resultLink.hasOwnProperty(newData[1])) {
+                    middleware.info('Title already exist')
+                    return
+                }
+                // final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                final = helper.collectiveLink(resultLink, newData[0])
+                store.setLink(final);
+                update.confirmUpdate();
+                middleware.info('Link saved successfully', 'success');
+                read.allLinks = final
+                domData.setBadgeState();
+
+            });
+        } else {
+            chrome.storage.sync.get('link', (result) => {
+                let resultLink = result.link;
+
+                //does title exist
+                if (typeof resultLink == 'object') {
+                    delete resultLink[read.currentLinkKey];
+
+                    final = (typeof resultLink == 'undefined') ? newData[0] : Object.assign(resultLink, newData[0]);
+                    store.setLink(final);
+                    update.confirmUpdate();
+                    middleware.info('Link updated successfully', 'success')
+                    read.formStatus = 'new'
+                    read.allLinks = final
+                    domData.setBadgeState();
+                }
+            })
+        }
     },
 
 }
 const api = {
-    retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
-    syncEndpoint: 'http://localhost/landing-page/api/add-link.php',
+    // retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
+    // syncEndpoint: 'http://localhost/landing-page/api/add-link.php',
+    retrieveEndpoint: 'https://businesstosales.com/api/retrieve-link.php',
+    syncEndpoint: 'https://businesstosales.com/api/add-link.php',
     syncRequest: function (response) {
         let syncFetch = this.syncFetch
         let prepareSyncRequest = this.prepareSyncRequest
@@ -152,6 +158,7 @@ const api = {
                 throw new Error(result.message);
 
             middleware.info(result.message, 'success');
+            UI.waitCloudResponse(false)
 
         }).catch(error => {
             middleware.info(error, 'error');
@@ -159,10 +166,10 @@ const api = {
         });
     },
     retrieveFetch: (request) => {
+
         fetch(request).then(response => {
 
             let result = response.json();
-            // console.log(response.status)
 
             if (response.status !== 200)
                 throw new Error(result.message);
@@ -182,12 +189,14 @@ const api = {
 
             store.setCollection(collection);
             store.setLink(link);
-
             middleware.info('retrieve successful', 'success');
             domData.linkList();//reload table
+            UI.waitCloudResponse(false)
         }).catch((error) => {
+
             middleware.info(error, 'error');
         });
+        return true;
     }
     ,
     retrieveRequest: function (response) {
@@ -204,7 +213,7 @@ const api = {
             },
             body: fd
         });
-        this.retrieveFetch(request)
+        return this.retrieveFetch(request)
 
 
     }
@@ -215,6 +224,7 @@ const UI = {
     searchInput: document.querySelector("input[name=search]"),
     cloudLogBox: document.querySelector('.cloudLogBox'),
     cloudLogMenu: document.querySelector('.cloudLogMenu'),
+
     giveInfo: document.querySelector('.giveInfo'),
     showList: function () {
         this.page.linkTable.style.display = "block";
@@ -228,7 +238,7 @@ const UI = {
         if (status) {
             span = document.createElement('span');
 
-            span.innerText = 'loading...'
+            span.innerText = 'Expecting response...'
             span.classList.add('cloud-loading')
             this.cloudLogBox.appendChild(span)
             this.cloudLogMenu.style.display = 'none';
@@ -315,7 +325,7 @@ const processForm = (link) => {
     let expire_at = linkForm.querySelector("input[name=expire_at]").value;
 
     //link validation 
-    if (expire_at.length < 1 || middleware.dateCheck(expire_at))
+    if (expire_at.length < 1 || middleware.dateCheck(expire_at, 1))
         return 'Choose a future date';
     if (title.length < 2)
         return 'Choose a proper title';
@@ -348,7 +358,9 @@ UI.notification.info.addEventListener('click', (e) => {
 
 //submit link form section
 UI.form.saveLink.submitBtn.addEventListener('click', () => {
-
+    if (read.formStatus == 'edit') 
+        UI.notification.info.innerText = '';
+    
     let newData = processForm(read.newLink);
 
     (typeof newData == 'object') ?
@@ -425,13 +437,11 @@ UI.cloud.sync.addEventListener('click', () => {
     chrome.runtime.sendMessage({
         message: 'check_status'
     }, (response) => {
-        UI.waitCloudResponse(false)
+        // UI.waitCloudResponse(false)
         if (chrome.runtime.lastError || response.error) {
             middleware.info('There was an error signing in', 'error');
             return;
         }
-
-
         api.syncRequest(response);
     })
 
@@ -444,8 +454,7 @@ UI.cloud.retrieve.addEventListener('click', () => {
     chrome.runtime.sendMessage({
         message: 'check_status'
     }, (response) => {
-       
-        UI.waitCloudResponse(false)
+
 
         if (response.error) {
             middleware.info(response.message, 'error');
@@ -460,10 +469,10 @@ UI.cloud.retrieve.addEventListener('click', () => {
 })
 
 //logout section
-UI.cloud.logout.addEventListener('click', () => {
-    chrome.storage.sync.remove('user')
-    middleware.info('Successfully logged out', 'success');
-})
+// UI.cloud.logout.addEventListener('click', () => {
+//     chrome.storage.sync.remove('user')
+//     middleware.info('Successfully logged out', 'success');
+// })
 //delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;
@@ -494,7 +503,8 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         UI.backToForm();
         UI.form.linkPreview.innerText = link
         UI.form.saveLink.titleInput.value = tit
-        UI.form.saveLink.titleInput.disabled = true
+        read.currentLinkKey = tit
+        // UI.form.saveLink.titleInput.disabled = true
 
         let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`)
         if (prev != null)
@@ -509,6 +519,7 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected = true
 
         read.formStatus = 'edit'
+
         UI.form.saveLink.expireInput.value = expire;
 
         UI.notification.info.innerText = 'Edit Link';

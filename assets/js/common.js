@@ -26,7 +26,8 @@ const read = {
     newLink: null,
     listTableStatus: 'full',
     timeout : null,
-    contextMenuIdCache:[]
+    contextMenuIdCache:[],
+    currentLinkKey:''
 }
 const middleware = {
     infoDom: document.querySelector('.info'),
@@ -56,18 +57,21 @@ const middleware = {
         UI.popWarn(warn);
         return true;
     },
-    dateCheck: (expire_at) => {
+    dateCheck: (expire_at,day) => {
+       
+
         if (helper.futureDate < 1)
-            helper.setFutureDate();
+            helper.setFutureDate(day);
+    
         return Date.parse(expire_at) <= helper.futureDate;
     }
 }
 const helper = {
-    futureDate: 0,//for validation
+    futureDate: 0, 
     calcFutureDate:function (day){
         return (new Date()).getTime() + (1000 * 60 * 60 * 24 * day)
     },
-    setFutureDate: function (day) {
+    setFutureDate: function (day = 1) {
         this.futureDate = this.calcFutureDate(day)
     },
     getFutureDate: function(day){
@@ -78,7 +82,21 @@ const helper = {
     },
     parseDate:function(time){
         let date = new Date(time)
-        return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`     
+        let month = ('0' + (date.getMonth()+1)). slice(-2)
+        let day = ('0' + (date.getDate())). slice(-2)
+        return `${date.getFullYear()}-${month}-${day}`     
+    },
+    parseTitle:function(title){
+        if(title.length > 40){
+              
+            let index = title.indexOf(' ', 39)
+            index = index > 1 ? index : 40
+            title = `${title.substr(0,index)}...`
+           
+
+           }
+    
+           return title
     }
 }
 /**
@@ -204,13 +222,15 @@ const domData = {
             if (noLink) {
                 UI.giveInfo.removeChild(noLink)
             }
+            if(UI.linkTable.clearLink.style.display == 'none'){
+            UI.linkTable.clearLink.style.display = ''
+            }
         } else {
             let div = document.createElement('div');
             div.classList.add('textCenter', 'noLink')
             div.innerText = 'No saved link'
-       
             UI.giveInfo.prepend(div)
-
+            UI.linkTable.clearLink.style.display = 'none'
         }
 
 
@@ -269,10 +289,13 @@ const listener = {
         for (const link in links) {
             if (Object.hasOwnProperty.call(links, link)) {
                 const element = links[link];
-                if (middleware.dateCheck(element.expire_at) && element.status == 'urgent')
-                    storeExpire[link] = links[link];
+    
+                if (middleware.dateCheck(element.expire_at, 1) && element.status == 'urgent'){
+                    storeExpire[link] = links[link];   
+                }
             }
         }
+       
         return storeExpire;
     },
     expireTable: (tit) => {

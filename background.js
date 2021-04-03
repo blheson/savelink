@@ -4,7 +4,9 @@ const background = {
       if (!read.contextMenuIdCache.includes(contextMenu.id)) {
         chrome.contextMenus.create(contextMenu, callback)
         read.contextMenuIdCache.push(contextMenu.id)
-
+      }else{
+        alert('already created')
+        console.log('already created')
       }
     },
     click: function () {
@@ -13,22 +15,23 @@ const background = {
         chrome.tabs.query({ 'active': true, 'windowId': chrome.windows.WINDOW_ID_CURRENT },
           function (tabs) {
 
-            let newLink = tabs[0].url.length > 1 ? tabs[0].url : 'loading...';
-            let title = tabs[0].title + ' - contextmenu'
+            let link = tabs[0].url.length > 1 ? tabs[0].url : '';
+            //create an alert for no link here
+            let title = helper.parseTitle(tabs[0].title)
+      
             let collection = 'contextmenu'
             let status = 'urgent'
             let expire_at = helper.parseDate(helper.getFutureDate(2));
-
+             
             let data = {};
             data[title] = {
               collection,
               expire_at,
-              newLink,
+              link,
               status,
               title
             };
-       
-    
+ 
             chrome.storage.sync.get('link', (result) => {
               let resultLink = result.link;
 
@@ -37,6 +40,7 @@ const background = {
                 return
               }
               final = helper.collectiveLink(resultLink, data)
+         
               chrome.storage.sync.set({ link: final });
  
 

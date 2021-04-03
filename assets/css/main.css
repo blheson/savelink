@@ -4,6 +4,7 @@ body,
 html {
     margin: 0;
     box-sizing: content-box;
+    padding: 0;
     /* overflow: hidden; */
 }
 
@@ -71,7 +72,9 @@ a {
     word-break: break-all;
     max-height: 43px
 }
-
+.noLink{
+    margin-bottom: 0.8rem;
+}
 .notification {
     font-size: 13px;
     font-weight: bold;
@@ -83,7 +86,7 @@ main {
     margin: auto;
     height: 416px;
     
-    padding: 1rem;
+    padding: 0.6rem 1rem;
     min-height: 100px
 }
 
@@ -362,7 +365,7 @@ tr.bodyListRow:nth-of-type(even) {
     text-align: center;
     padding-bottom: 0.5rem;
     font-weight: 500;
-    min-height: 14.5px;
+    /* min-height: 14.5px; */
 }
 
 .error {
