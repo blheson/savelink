@@ -77,6 +77,7 @@ a {
 }
 .notification {
     font-size: 13px;
+    padding-bottom: 0.5rem;
     font-weight: bold;
     text-align: center;
     color:#2e3b3c
@@ -363,22 +364,28 @@ tr.bodyListRow:nth-of-type(even) {
 .info,
 .collectionInfo {
     text-align: center;
-    padding-bottom: 0.5rem;
+  
     font-weight: 500;
     /* min-height: 14.5px; */
 }
-
+.info.error, .info.success{
+    position: fixed;
+    top: 50%;
+    /* left: calc( 50% - 33px); */
+    background: rgb(255 255 255);
+    padding: 1rem 0.5rem;
+    box-shadow: 3px 3px 8px 3px #17353630;
+}
 .error {
     color: rgb(255 0 0);
 }
-
 .success {
     color: #2e989b;
 }
 
 .fadeOut {
     animation-name: fadeOut;
-    animation-duration: 3000ms;
+    animation-duration: 2000ms;
     transition-timing-function: ease-in;
     animation-fill-mode: both;
 }

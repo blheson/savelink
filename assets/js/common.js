@@ -30,27 +30,33 @@ const read = {
     currentLinkKey:''
 }
 const middleware = {
-    infoDom: document.querySelector('.info'),
+    createInfoDom: function(){
+        let div = document.createElement('div')
+        div.classList.add('info')
+        UI.body.appendChild(div)
+        return div
+    },
+    // infoDom: this.createInfoDom(),
     info: function (info, status = 'error') {
-        this.infoDom.innerText = info;
-        this.infoDom.classList.add('fadeOut', status);
-        this.clear(this.infoDom, status);
+        dom = this.createInfoDom()
+   
+        dom.innerText = info;
+        dom.classList.add('fadeOut', status);
+        dom.style.cssText = `left:calc(50% - ${dom.offsetWidth/2}px);`
+
+        this.clear(dom, status);
     },
     collection: {
-        infoDom: document.querySelector('.collectionInfo'),
-        info: function (info, status = 'error') {
-            this.infoDom.innerText = info;
-            this.infoDom.classList.add('fadeOut', status);
-            middleware.clear(this.infoDom, status);
-        }
+        infoDom: document.querySelector('.collectionInfo')
     }
     ,
     clear: function (info, status) {
 
         setTimeout(() => {
-            info.innerText = '';
+
             info.classList.remove('fadeOut', status);
-        }, 3000);
+            UI.body.removeChild(info)
+        }, 2500);
     }
     ,
     confirm: function (warn) {
@@ -62,8 +68,8 @@ const middleware = {
 
         if (helper.futureDate < 1)
             helper.setFutureDate(day);
-    
-        return Date.parse(expire_at) <= helper.futureDate;
+  
+        return Date.parse(expire_at) < helper.futureDate;
     }
 }
 const helper = {
@@ -313,9 +319,7 @@ const listener = {
             domData.linkList();
             read.tableStatus = true
         }
-        // domData.linkList();
-        // read.tableStatus = true
-
+      
         UI.showList();
         this.showNotification()
         UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');

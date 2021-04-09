@@ -12,7 +12,7 @@ const init = async () => {
             let tab = tabs[0]
             read.newLink = tab.url.length > 1 ? tab.url : 'loading...';
             UI.form.linkPreview.innerText = read.newLink;
-            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? //tab.title : 'enter a title';
+            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? 
                 helper.parseTitle(tab.title) : 'enter a title';
 
         }
@@ -40,7 +40,8 @@ const store = {
                 final = data
             } else {
                 if (resultCollection.includes(data)) {
-                    middleware.collection.info('This collection already exist')
+                    // middleware.collection.info('This collection already exist')
+                    middleware.info('This collection already exist')
                     return
                 }
                 final = resultCollection.concat(data)
@@ -162,6 +163,7 @@ const api = {
 
         }).catch(error => {
             middleware.info(error, 'error');
+            UI.waitCloudResponse(false)
 
         });
     },
@@ -195,6 +197,7 @@ const api = {
         }).catch((error) => {
 
             middleware.info(error, 'error');
+            UI.waitCloudResponse(false)
         });
         return true;
     }
@@ -221,6 +224,7 @@ const api = {
 
 //UI section
 const UI = {
+    body: document.querySelector('body'),
     searchInput: document.querySelector("input[name=search]"),
     cloudLogBox: document.querySelector('.cloudLogBox'),
     cloudLogMenu: document.querySelector('.cloudLogMenu'),
@@ -439,7 +443,9 @@ UI.cloud.sync.addEventListener('click', () => {
     }, (response) => {
         // UI.waitCloudResponse(false)
         if (chrome.runtime.lastError || response.error) {
-            middleware.info('There was an error signing in', 'error');
+            middleware.info(response.message, 'error');
+        UI.waitCloudResponse(false)
+
             return;
         }
         api.syncRequest(response);
@@ -458,6 +464,8 @@ UI.cloud.retrieve.addEventListener('click', () => {
 
         if (response.error) {
             middleware.info(response.message, 'error');
+        UI.waitCloudResponse(false)
+
             return;
         }
 
@@ -469,10 +477,10 @@ UI.cloud.retrieve.addEventListener('click', () => {
 })
 
 //logout section
-// UI.cloud.logout.addEventListener('click', () => {
-//     chrome.storage.sync.remove('user')
-//     middleware.info('Successfully logged out', 'success');
-// })
+UI.cloud.logout.addEventListener('click', () => {
+    chrome.storage.sync.remove('user')
+    middleware.info('Successfully logged out', 'success');
+})
 //delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;
@@ -542,7 +550,7 @@ UI.searchInput.addEventListener('keyup', (e) => {
         for (const key in allLinks) {
             if (Object.hasOwnProperty.call(allLinks, key)) {
                 const element = allLinks[key];
-                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search))
+                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search))
                     cache[key] = element;
             }
         }
