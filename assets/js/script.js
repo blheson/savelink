@@ -11,26 +11,37 @@ const init = async () => {
         function (tabs) {
             let tab = tabs[0]
             read.newLink = tab.url.length > 1 ? tab.url : 'loading...';
-            UI.form.linkPreview.innerText = read.newLink;
-            UI.form.saveLink.titleInput.value = tab.title.length > 1 ? 
+            // UI.form.linkPreview.innerText = read.newLink;
+            UI.form.linkPreview.value = read.newLink;
+            UI.form.saveLink.titleInput.value = tab.title.length > 1 ?
                 helper.parseTitle(tab.title) : 'enter a title';
 
         }
     );
     helper.setFutureDate(1);
     setTimeout(() => {
-        notification.expired(listener.expire())
+
+        if (read.expireListCount() == 0 ) {
+            listener.expire()
+        }
+       
+        notification.expired()
     }, 500)
 }
 const notification = {
-    expired: (store) => {
-        if (store) {
-            read.expireList = store
-            domData.createNotification();
-        }
+    expired: () => {
+ 
+        if (read.expireList) domData.createNotification();
     }
 }
-
+const funMessages = [
+    'Please wait while the magic goes on', 'It really should not be this long',
+    'Do you want to read a joke?',
+    'Who looks after our health?',
+    'Yea, you guessed right, WHO',
+    'Funny right?',
+    'Expecting response...'
+]
 const store = {
     saveCollection: function (data) {
 
@@ -121,6 +132,8 @@ const api = {
             let link = JSON.stringify(result.link);
             if (typeof link === 'undefined' || Object.keys(result.link).length < 1) {
                 middleware.info('No link available', 'error');
+                UI.waitCloudResponse(false)
+
                 return true;
             }
             let request = prepareSyncRequest(link, result.collection, response.message)
@@ -162,6 +175,8 @@ const api = {
             UI.waitCloudResponse(false)
 
         }).catch(error => {
+            if (error == 'TypeError: Failed to fetch')
+                error = 'No internet connection'
             middleware.info(error, 'error');
             UI.waitCloudResponse(false)
 
@@ -187,8 +202,6 @@ const api = {
             let link = JSON.parse(result.message.link);
 
             let collection = result.message.collection.split(',');
-
-
             store.setCollection(collection);
             store.setLink(link);
             middleware.info('retrieve successful', 'success');
@@ -196,17 +209,15 @@ const api = {
             UI.waitCloudResponse(false)
         }).catch((error) => {
 
+            if (error == 'TypeError: Failed to fetch')
+                error = 'No internet connection'
             middleware.info(error, 'error');
             UI.waitCloudResponse(false)
         });
         return true;
-    }
-    ,
+    },
     retrieveRequest: function (response) {
-
-
         let fd = new FormData();
-
         fd.append('user', response.message);
 
         let request = new Request(api.retrieveEndpoint, {
@@ -217,13 +228,18 @@ const api = {
             body: fd
         });
         return this.retrieveFetch(request)
-
-
     }
 }
 
 //UI section
 const UI = {
+    displayExpireDate: function () {
+        if (this.form.saveLink.selectStatus.value.toLowerCase() == 'later') {
+            this.form.saveLink.expireBox.style.display = 'none'
+            return
+        }
+        this.form.saveLink.expireBox.style.display = ''
+    },
     body: document.querySelector('body'),
     searchInput: document.querySelector("input[name=search]"),
     cloudLogBox: document.querySelector('.cloudLogBox'),
@@ -242,10 +258,19 @@ const UI = {
         if (status) {
             span = document.createElement('span');
 
-            span.innerText = 'Expecting response...'
             span.classList.add('cloud-loading')
             this.cloudLogBox.appendChild(span)
             this.cloudLogMenu.style.display = 'none';
+            span.innerText = 'Expecting response...'
+            let i = 0
+            setInterval(function () {
+                if (i > funMessages.length - 1)
+                    i = 0
+                span.innerText = funMessages[i]
+
+                i++
+            }, 3000)
+
         } else {
             span = document.querySelector('.cloud-loading')
             this.cloudLogBox.removeChild(span)
@@ -272,6 +297,7 @@ const UI = {
         this, this.searchInput.classList.add('d-none');
         document.querySelector(".navBtn.active").classList.remove('active')
         this.menuBtn.saveLink.classList.add('active')
+        UI.displayExpireDate()
     },
     notification: {
         info: document.querySelector('.notification')
@@ -292,7 +318,8 @@ const UI = {
             selectCollection: document.querySelector("select[name=collection"),
             selectStatus: document.querySelector("select[name=status"),
             titleInput: document.querySelector("input[name=title]"),
-            expireInput: document.querySelector("input[name=expire_at]"),
+            expireInput: document.querySelector("input[name=expireAt]"),
+            expireBox: document.querySelector(".expireDate"),
             submitBtn: document.querySelector('.submitLinkForm')
         },
         saveCollection: {
@@ -326,11 +353,14 @@ const processForm = (link) => {
     let collection = linkForm.querySelector("select[name=collection]").value;
     let title = linkForm.querySelector("input[name=title]").value;
     let status = linkForm.querySelector("select[name=status]").value;
-    let expire_at = linkForm.querySelector("input[name=expire_at]").value;
+    let isLinkStatusLater = status.toLowerCase() == 'later'
+    let expire_at = isLinkStatusLater ? '-' : linkForm.querySelector("input[name=expireAt]").value
+
 
     //link validation 
-    if (expire_at.length < 1 || middleware.dateCheck(expire_at, 1))
-        return 'Choose a future date';
+    if (!isLinkStatusLater)
+        if (expire_at.length < 1 || middleware.dateCheck(expire_at, 1))
+            return 'Choose a future date';
     if (title.length < 2)
         return 'Choose a proper title';
     if (collection == 'addNew')
@@ -362,9 +392,9 @@ UI.notification.info.addEventListener('click', (e) => {
 
 //submit link form section
 UI.form.saveLink.submitBtn.addEventListener('click', () => {
-    if (read.formStatus == 'edit') 
+    if (read.formStatus == 'edit')
         UI.notification.info.innerText = '';
-    
+
     let newData = processForm(read.newLink);
 
     (typeof newData == 'object') ?
@@ -380,7 +410,8 @@ UI.menuBtn.showList.addEventListener("click", () => {
     UI.form.saveLink.submitBtn.classList.remove('btnPrimary');
     UI.notification.info.innerText = '';
     read.formStatus = 'new'
-    UI.form.linkPreview.innerText = read.newLink
+    // UI.form.linkPreview.innerText = read.newLink
+    UI.form.linkPreview.value = read.newLink
     UI.form.saveLink.titleInput.value = ''
     UI.form.saveLink.titleInput.disabled = false
 
@@ -437,50 +468,48 @@ UI.collection.submitBtn.addEventListener('click', () => {
 })
 //Sync Section
 UI.cloud.sync.addEventListener('click', () => {
-    UI.waitCloudResponse(true)
-    chrome.runtime.sendMessage({
-        message: 'check_status'
-    }, (response) => {
-        // UI.waitCloudResponse(false)
-        if (chrome.runtime.lastError || response.error) {
-            middleware.info(response.message, 'error');
-        UI.waitCloudResponse(false)
+    if (confirm('Do you want to overwrite data in cloud?')) {
+        UI.waitCloudResponse(true)
+        chrome.runtime.sendMessage({
+            message: 'check_status'
+        }, (response) => {
+            // UI.waitCloudResponse(false)
+            if (chrome.runtime.lastError || response.error) {
+                middleware.info(response.message, 'error');
+                UI.waitCloudResponse(false)
 
-            return;
-        }
-        api.syncRequest(response);
-    })
+                return;
+            }
+            api.syncRequest(response);
+        })
+    }
+
 
 
 })
 // retrieve section
 UI.cloud.retrieve.addEventListener('click', () => {
-    UI.waitCloudResponse(true)
+    if (confirm('Retrieving from cloud will overwrite your current links?')) {
+        UI.waitCloudResponse(true)
 
-    chrome.runtime.sendMessage({
-        message: 'check_status'
-    }, (response) => {
-
-
-        if (response.error) {
-            middleware.info(response.message, 'error');
-        UI.waitCloudResponse(false)
-
-            return;
-        }
-
-        api.retrieveRequest(response);
-
-    })
-
-
+        chrome.runtime.sendMessage({
+            message: 'check_status'
+        }, (response) => {
+            if (response.error) {
+                middleware.info(response.message, 'error');
+                UI.waitCloudResponse(false)
+                return;
+            }
+            api.retrieveRequest(response);
+        })
+    }
 })
 
 //logout section
-UI.cloud.logout.addEventListener('click', () => {
-    chrome.storage.sync.remove('user')
-    middleware.info('Successfully logged out', 'success');
-})
+// UI.cloud.logout.addEventListener('click', () => {
+//     chrome.storage.sync.remove('user')
+//     middleware.info('Successfully logged out', 'success');
+// })
 //delete and edit link section
 UI.linkTable.tBody.addEventListener('click', (e) => {
     let targetDom = e.target;
@@ -494,9 +523,11 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
             delete link[tit];
             listener.expireTable(tit);
             store.setLink(link);
-            domData.setUpTable();
+            // domData.setUpTable();
             read.allLinks = link;
             domData.setBadgeState();
+            //make only search result show
+            domData.loadSearch()
         })
     }
     /**
@@ -509,7 +540,8 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         let status = targetDom.parentNode.parentNode.querySelector(".singStatus").innerText;
 
         UI.backToForm();
-        UI.form.linkPreview.innerText = link
+        // UI.form.linkPreview.innerText = link
+        UI.form.linkPreview.value = link
         UI.form.saveLink.titleInput.value = tit
         read.currentLinkKey = tit
         // UI.form.saveLink.titleInput.disabled = true
@@ -543,20 +575,25 @@ UI.searchInput.addEventListener('keyup', (e) => {
     // if it has been less than <MILLISECONDS>
     clearTimeout(read.timeout);
     read.timeout = setTimeout(() => {
-        let cache = {};
-        let search = UI.searchInput.value.toLowerCase()
-        let allLinks = read.allLinks
+        domData.loadSearch()
+        // let cache = {};
+        // let search = UI.searchInput.value.toLowerCase()
+        // let allLinks = read.allLinks
 
-        for (const key in allLinks) {
-            if (Object.hasOwnProperty.call(allLinks, key)) {
-                const element = allLinks[key];
-                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search))
-                    cache[key] = element;
-            }
-        }
+        // for (const key in allLinks) {
+        //     if (Object.hasOwnProperty.call(allLinks, key)) {
+        //         const element = allLinks[key];
+        //         if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search))
+        //             cache[key] = element;
+        //     }
+        // }
 
-        domData.searchLinkList(cache)
+        // domData.searchLinkList(cache)
     }, 500);
 })
+UI.form.saveLink.selectStatus.addEventListener('change', () => {
+    UI.displayExpireDate();
+})
+
 
 init()

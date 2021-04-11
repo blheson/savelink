@@ -11,6 +11,11 @@ const read = {
     },
     allLinks: []
     ,
+    expireListCount: function () {
+
+        return Object.keys(this.expireList).length
+    }
+    ,
     expireList: {},
     formStatus: 'new',//new, when adding new link
     tableStatus: false,//true when link list is active
@@ -25,12 +30,11 @@ const read = {
     },
     newLink: null,
     listTableStatus: 'full',
-    timeout : null,
-    contextMenuIdCache:[],
-    currentLinkKey:''
+    timeout: null,
+    currentLinkKey: ''
 }
 const middleware = {
-    createInfoDom: function(){
+    createInfoDom: function () {
         let div = document.createElement('div')
         div.classList.add('info')
         UI.body.appendChild(div)
@@ -39,10 +43,10 @@ const middleware = {
     // infoDom: this.createInfoDom(),
     info: function (info, status = 'error') {
         dom = this.createInfoDom()
-   
+
         dom.innerText = info;
         dom.classList.add('fadeOut', status);
-        dom.style.cssText = `left:calc(50% - ${dom.offsetWidth/2}px);`
+        dom.style.cssText = `left:calc(50% - ${dom.offsetWidth / 2}px);`
 
         this.clear(dom, status);
     },
@@ -63,59 +67,79 @@ const middleware = {
         UI.popWarn(warn);
         return true;
     },
-    dateCheck: (expire_at,day) => {
-       
+    dateCheck: (expireAt, day) => {
+
 
         if (helper.futureDate < 1)
             helper.setFutureDate(day);
-  
-        return Date.parse(expire_at) < helper.futureDate;
+
+        return Date.parse(expireAt) < helper.futureDate;
     }
 }
 const helper = {
-    futureDate: 0, 
-    calcFutureDate:function (day){
+    futureDate: 0,
+    calcFutureDate: function (day) {
         return (new Date()).getTime() + (1000 * 60 * 60 * 24 * day)
     },
     setFutureDate: function (day = 1) {
         this.futureDate = this.calcFutureDate(day)
     },
-    getFutureDate: function(day){
+    getFutureDate: function (day) {
         return this.calcFutureDate(day)
     },
-    collectiveLink:function(resultLink,link){
-        return (typeof resultLink == 'undefined') ? link : Object.assign(resultLink, link);
+    collectiveLink: function (resultLink, link) {
+     let compiledLink = (typeof resultLink == 'undefined') ? link : Object.assign(resultLink, link);
+
+     return compiledLink
     },
-    parseDate:function(time){
+    parseDate: function (time) {
         let date = new Date(time)
-        let month = ('0' + (date.getMonth()+1)). slice(-2)
-        let day = ('0' + (date.getDate())). slice(-2)
-        return `${date.getFullYear()}-${month}-${day}`     
+        let month = ('0' + (date.getMonth() + 1)).slice(-2)
+        let day = ('0' + (date.getDate())).slice(-2)
+        return `${date.getFullYear()}-${month}-${day}`
     },
-    parseTitle:function(title){
-        if(title.length > 40){
-              
+    parseTitle: function (title) {
+        if (title.length > 40) {
+
             let index = title.indexOf(' ', 39)
             index = index > 1 ? index : 40
-            title = `${title.substr(0,index)}...`
-           
+            title = `${title.substr(0, index)}...`
 
-           }
-    
-           return title
+
+        }
+
+        return title
     }
 }
+
 /**
  * Work with Dom
  * @return node
  */
 const domData = {
+    loadSearch: () => {
+        let cache = {};
+        let search = UI.searchInput.value.toLowerCase()
+        let allLinks = read.allLinks
+
+        for (const key in allLinks) {
+            // if (Object.hasOwnProperty.call(allLinks, key)) {
+                const element = allLinks[key];
+        
+                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search))
+                    cache[key] = element;
+            // }
+        }
+
+        domData.searchLinkList(cache)
+    },
     setUpTable: function () {
         if (read.listTableStatus == 'full')
             this.linkList()
         else
             this.ExpiredLinkList();
     },
+
     setBadgeState: function () {//sync the current expired link to badge
         expire = listener.expire()
         let expiredLinkCount = Object.keys(expire).length;
@@ -126,7 +150,7 @@ const domData = {
         else
             chrome.browserAction.setBadgeText({ 'text': '' });
 
-      
+
     },
 
     tableRow: function () {
@@ -169,7 +193,8 @@ const domData = {
         return '';
     },
     createNotification: function () {
-        let listCount = Object.keys(read.expireList).length;
+        let listCount = read.expireListCount();
+     
         if (listCount > 0)
             document.querySelector('.notification').innerHTML = `You have ${listCount} expired link(s). <button class="danger btnSm btnDanger notifyBtn">Check it out</button>`;
     },
@@ -224,12 +249,12 @@ const domData = {
         if (typeof res == 'object') {
             UI.linkTable.tBody.appendChild(res)
             let noLink = UI.giveInfo.querySelector('.noLink')
-       
+
             if (noLink) {
                 UI.giveInfo.removeChild(noLink)
             }
-            if(UI.linkTable.clearLink.style.display == 'none'){
-            UI.linkTable.clearLink.style.display = ''
+            if (UI.linkTable.clearLink.style.display == 'none') {
+                UI.linkTable.clearLink.style.display = ''
             }
         } else {
             let div = document.createElement('div');
@@ -245,11 +270,11 @@ const domData = {
     linkList: function () {
         // let fill = this.fillTable;
         let appendListResult = this.appendListResult;
-      
+
         chrome.storage.sync.get('link', (result) => {
 
             appendListResult(result.link)
-         
+
         });
     },
     searchLinkList: function (data) {
@@ -289,19 +314,20 @@ const domData = {
 
 const listener = {
     expire: () => {
-  
-        let links = read.allLinks;
+        if (read.allLinks.length < 1)
+            read.syncLinks();
+ let links = read.allLinks
         let storeExpire = {};
         for (const link in links) {
             if (Object.hasOwnProperty.call(links, link)) {
                 const element = links[link];
-    
-                if (middleware.dateCheck(element.expire_at, 1) && element.status == 'urgent'){
-                    storeExpire[link] = links[link];   
+
+                if (middleware.dateCheck(element.expire_at, 1) && element.status.toLowerCase() == 'urgent') {
+                    storeExpire[link] = links[link];
                 }
             }
         }
-       
+        read.expireList = storeExpire
         return storeExpire;
     },
     expireTable: (tit) => {
@@ -319,11 +345,10 @@ const listener = {
             domData.linkList();
             read.tableStatus = true
         }
-      
+
         UI.showList();
         this.showNotification()
         UI.linkTable.tr = UI.linkTable.tBody.querySelectorAll('.bodyListRow');
         notification.expired(listener.expire())
     }
 }
-

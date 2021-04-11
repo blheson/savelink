@@ -30,7 +30,8 @@
         </section>
         <section id="saveLinkForm" class="slideIn">
             <div>
-                <div class="linkPreview textCenter"></div>
+                <div class="linPreview textCenter"></div>
+                <input type="text" value="" class="linkPreview textCenter">
                 <hr>
                 <div class="row linkForm">
                     <div class="row"><label class="stan" for="">Title:
@@ -45,7 +46,7 @@
                                 <option value="urgent">Urgent</option>
                                 <option value="later">Later</option>
                             </select></label></div>
-                    <div class="row"> <label class="stan" for="">Expiry Date: <input type="date" name="expire_at"
+                    <div class="row expireDate"> <label class="stan" for="">Expiry Date: <input type="date" name="expireAt"
                                 value="">
                         </label></div>
                 </div>
@@ -63,8 +64,8 @@
                     <span class="cloudLog sync">sync</span>
                     |
                     <span class="cloudLog retrieve">retrieve</span>
-                    |
-                    <span class="cloudLog logout">logout</span>
+                    <!-- |
+                    <span class="cloudLog logout">logout</span> -->
                 </div>
 
             </div>
