@@ -4,11 +4,10 @@
   "description": "Help manage stored links!",
   "permissions": [
     "tabs",
-    "declarativeContent",
     "storage",
     "identity",
-    "unlimitedStorage",
     "identity.email",
+    "unlimitedStorage",
     "contextMenus",
     "notifications"
   ],
@@ -16,7 +15,6 @@
     "scripts": [
       "assets/js/common.js",
       "assets/js/auth.js",
-      "assets/js/jwt-decode.js",
       "background.js"
     ],
     "persistent": false

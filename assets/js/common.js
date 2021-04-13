@@ -1,15 +1,15 @@
 const read = {
     syncLinks: function () {
-        chrome.storage.sync.get('link', (result) => {
-            this.allLinks = result.link;
+        chrome.storage.sync.get('link', ({ link }) => {
+            this.allLinks = link ? link : {}
         });
     },
     syncCollections: function () {
-        chrome.storage.sync.get('collection', (result) => {
-            this.allCollections = result.collection;
+        chrome.storage.sync.get('collection', ({ collection }) => {
+            this.allCollections = collection;
         });
     },
-    allLinks: []
+    allLinks: {}
     ,
     expireListCount: function () {
 
@@ -20,14 +20,6 @@ const read = {
     formStatus: 'new',//new, when adding new link
     tableStatus: false,//true when link list is active
     allCollections: [],
-    getLinks: function () {
-        this.syncLinks()
-        return this.allLinks;
-    },
-    getCollections: function () {
-        this.syncCollections();
-        return this.allCollections;
-    },
     newLink: null,
     listTableStatus: 'full',
     timeout: null,
@@ -88,9 +80,9 @@ const helper = {
         return this.calcFutureDate(day)
     },
     collectiveLink: function (resultLink, link) {
-     let compiledLink = (typeof resultLink == 'undefined') ? link : Object.assign(resultLink, link);
+        let compiledLink = (typeof resultLink == 'undefined') ? link : Object.assign(resultLink, link);
 
-     return compiledLink
+        return compiledLink
     },
     parseDate: function (time) {
         let date = new Date(time)
@@ -124,10 +116,10 @@ const domData = {
 
         for (const key in allLinks) {
             // if (Object.hasOwnProperty.call(allLinks, key)) {
-                const element = allLinks[key];
-        
-                if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search))
-                    cache[key] = element;
+            const element = allLinks[key];
+
+            if (key.toLowerCase().includes(search) || element.collection.toLowerCase().includes(search) || element.link.toLowerCase().includes(search) || element.status.toLowerCase().includes(search))
+                cache[key] = element;
             // }
         }
 
@@ -169,10 +161,11 @@ const domData = {
         edit.innerText = 'i';
         singClear.appendChild(edit);
         let clear = document.createElement("span");
-        clear.classList.add('singClear', 'singIcon');
+        clear.classList.add('singClear', 'singIcon', 'slideIn');
         clear.innerText = 'x';
         singClear.appendChild(clear);
-
+        clear.title = 'delete link'
+        edit.title = 'edit link'
         tr.classList.add('bodyListRow');
         tr.append(singLink, singCollection, singStatus, singDate, singClear);
         return tr;
@@ -194,7 +187,7 @@ const domData = {
     },
     createNotification: function () {
         let listCount = read.expireListCount();
-     
+
         if (listCount > 0)
             document.querySelector('.notification').innerHTML = `You have ${listCount} expired link(s). <button class="danger btnSm btnDanger notifyBtn">Check it out</button>`;
     },
@@ -205,8 +198,8 @@ const domData = {
     }
     ,
     collectionOption: function () {
-        chrome.storage.sync.get('collection', (result) => {
-            let resultCollection = result.collection
+        chrome.storage.sync.get('collection', ({collection}) => {
+            let resultCollection = collection
 
             if (typeof resultCollection == 'undefined' || resultCollection.length < 1) {
                 chrome.storage.sync.set({ collection: ['blog', 'finance'] }, function () {
@@ -243,28 +236,28 @@ const domData = {
         return domData.checkObjMany(result, tempNode, fragment);
     },
     appendListResult: function (data) {
+
         UI.linkTable.tBody.innerHTML = ''
-        // document.querySelector(".bodyList").innerHTML = '';
+
         let res = domData.fillTable(domData.tableRow(), data)
-        if (typeof res == 'object') {
+
+        if (typeof res == 'object' && Object.keys(data).length > 0) {
             UI.linkTable.tBody.appendChild(res)
             let noLink = UI.giveInfo.querySelector('.noLink')
 
-            if (noLink) {
-                UI.giveInfo.removeChild(noLink)
-            }
-            if (UI.linkTable.clearLink.style.display == 'none') {
-                UI.linkTable.clearLink.style.display = ''
-            }
+            if (noLink) UI.giveInfo.removeChild(noLink)
+
+            if (UI.linkTable.clearLink.style.display == 'none') UI.linkTable.clearLink.style.display = ''
         } else {
-            let div = document.createElement('div');
-            div.classList.add('textCenter', 'noLink')
-            div.innerText = 'No saved link'
-            UI.giveInfo.prepend(div)
+            if (!UI.giveInfo.querySelector('.noLink')) {
+                let div = document.createElement('div');
+                div.classList.add('textCenter', 'noLink')
+                div.innerText = 'No result'
+                UI.giveInfo.prepend(div)
+            }
+
             UI.linkTable.clearLink.style.display = 'none'
         }
-
-
     }
     ,
     linkList: function () {
@@ -314,9 +307,10 @@ const domData = {
 
 const listener = {
     expire: () => {
-        if (read.allLinks.length < 1)
+
+        if (Object.keys(read.allLinks).length < 1)
             read.syncLinks();
- let links = read.allLinks
+        let links = read.allLinks
         let storeExpire = {};
         for (const link in links) {
             if (Object.hasOwnProperty.call(links, link)) {
@@ -341,6 +335,7 @@ const listener = {
             UI.notification.info.innerText = ''
     },
     handleShowListButton: function () {
+
         if (!read.tableStatus) {
             domData.linkList();
             read.tableStatus = true

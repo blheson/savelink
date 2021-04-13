@@ -36,7 +36,6 @@ const auth = {
     },
     sendSignInRequest: (sendResponse) => {
         chrome.storage.sync.get('user', function (result) {
-
             if (result.user != undefined) {
                 sendResponse({ 'error': false, 'message': result.user })
 
@@ -45,7 +44,6 @@ const auth = {
 
 
                 chrome.identity.getProfileUserInfo((response) => {
-
                     if (response.id.length > 1) { //also check if empty
                         if (chrome.runtime.lastError) {
                             sendResponse({ 'error': true, 'message': 'there was an error in the response' });

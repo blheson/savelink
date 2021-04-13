@@ -7,16 +7,16 @@ const background = {
       if (helper.futureDate == 0) helper.setFutureDate(1)
 
       //Only make alert once a day
-      if (notificationDate > helper.futureDate) {//check for expirelinks
-        if (read.allLinks.length < 1)
+      if (notificationDate < (new Date()).getTime()) {//check for expirelinks
+        if (Object.keys(read.allLinks).length < 1)
           read.syncLinks();
-
-
-        //allow the link syncing before making notification
+        //allow link syncing before making notification
         setTimeout(() => {
           let listCount = Object.keys(listener.expire()).length
           if (listCount > 0) {
+
             chrome.storage.sync.set({ notify: helper.futureDate })
+
             chrome.notifications.create('error', {
               type: 'basic',
               title: 'Expired Link Notification',
@@ -26,26 +26,21 @@ const background = {
           }
 
         }, 1000)
-
-
-
       }
-
     })
 
   },
   contextMenu: {
     create: function (contextMenu, callback = null) {
       chrome.storage.sync.get('contextMenuIds', ({ contextMenuIds }) => {
-        if (typeof contextMenuIds != 'array') contextMenuIds = []
+        if (typeof contextMenuIds != 'object') contextMenuIds = []
 
-        if (!contextMenuIds.includes(contextMenu.id)) {
+        if (contextMenuIds.includes(contextMenu.id)) {
           chrome.contextMenus.create(contextMenu, callback)
           contextMenuIds.push(contextMenu.id)
           chrome.storage.sync.set({ contextMenuIds })
         }
       })
-
     },
     parseLinkData: (tabs) => {
       let link = tabs[0].url.length > 1 ? tabs[0].url : '';
@@ -79,9 +74,8 @@ const background = {
           function (tabs) {
 
             [data, title] = background.contextMenu.parseLinkData(tabs)
-            let re = /^(http)/;
 
-            if (!re.test(tabs[0].url)) {
+            if (!/^(http)/.test(tabs[0].url)) {
               chrome.notifications.create('error', {
                 type: 'basic',
                 title: 'Notification',
@@ -111,7 +105,7 @@ const background = {
               chrome.notifications.create('success', {
                 type: 'basic',
                 title: 'Success',
-                message: 'Link upload successful',
+                message: 'Link is successfully saved',
                 iconUrl: 'assets/img/blim32.png'
               })
             })
@@ -120,7 +114,6 @@ const background = {
         );
       })
     }
-
   },
   tab: {
     activated: function () {
@@ -131,7 +124,9 @@ const background = {
     }
   },
   runtime: {
-    onInstalled: () => {
+    onInstalled: function() {
+ 
+      background.contextMenu.create({ 'id': 'addLink', 'title': 'Add URL' })
       chrome.runtime.onInstalled.addListener(function () {
         chrome.storage.sync.set({ notify: helper.setFutureDate() })
         chrome.storage.sync.get('collection', function (result) {
@@ -148,24 +143,19 @@ const background = {
         if (request.message === 'check_status') {
           // check if user is logged in on chrome
           auth.sendSignInRequest(sendResponse);
-
         }
-        if (request.message === 'save_link_contextmenu') {
-          console.log(sender)
-        }
-
-
         return true;
 
       })
     }
+  },
+  init: function() {
+
+    this.contextMenu.click();
+    this.tab.activated();
+    this.runtime.onInstalled();
+    this.runtime.onMessage();
+    this.notification();
   }
 }
-
-background.contextMenu.create({ 'id': 'addLink', 'title': 'Add URL' })
-background.contextMenu.click();
-background.tab.activated();
-background.runtime.onInstalled();
-background.runtime.onMessage();
-background.notification();
-
+background.init()
