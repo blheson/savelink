@@ -32,14 +32,9 @@ const background = {
   },
   contextMenu: {
     create: function (contextMenu, callback = null) {
-      chrome.storage.sync.get('contextMenuIds', ({ contextMenuIds }) => {
-        if (typeof contextMenuIds != 'object') contextMenuIds = []
-
-        if (contextMenuIds.includes(contextMenu.id)) {
+   
+      chrome.contextMenus.removeAll(() => {
           chrome.contextMenus.create(contextMenu, callback)
-          contextMenuIds.push(contextMenu.id)
-          chrome.storage.sync.set({ contextMenuIds })
-        }
       })
     },
     parseLinkData: (tabs) => {
@@ -80,6 +75,15 @@ const background = {
                 type: 'basic',
                 title: 'Notification',
                 message: 'Invalid Url',
+                iconUrl: 'assets/img/blim32.png'
+              })
+              return
+            }
+            if(title.length < 1){
+              chrome.notifications.create('error', {
+                type: 'basic',
+                title: 'Notification',
+                message: 'Page does not have title, Please insert manually',
                 iconUrl: 'assets/img/blim32.png'
               })
               return

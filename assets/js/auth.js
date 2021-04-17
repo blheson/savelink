@@ -11,7 +11,6 @@ const auth = {
         return userSignIn;
     },
     createOauth2Uri: () => {
-        let nonce = encodeURIComponent(Math.random().toString(30).substring(5, 19) + Math.random().toString(30).substring(5, 19))
         let url = `https://accounts.google.com/o/oauth2/auth?client_id=${CLIENT_ID}&response_type=${RESPONSE_TYPE}&redirect_uri=${REDIRECT_URL}&state=${STATE}&scope=${SCOPE}&prompt=${PROMPT}`
         // &nonce=${nonce}
         // `

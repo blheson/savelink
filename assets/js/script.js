@@ -35,7 +35,10 @@ const notification = {
     }
 }
 const funMessages = [
-    'Please wait while the magic goes on', 'It really should not be this long',
+    'Please wait while the magic goes on', 
+    'It really should not take this long',
+    'Is your network connection strong?',
+    'You can do other things, while I finish this errand',
     'Do you want to read a joke?',
     'Who looks after our health?',
     'Yea, you guessed right, WHO',
@@ -51,7 +54,6 @@ const store = {
                 final = data
             } else {
                 if (resultCollection.includes(data)) {
-                    // middleware.collection.info('This collection already exist')
                     middleware.info('This collection already exist')
                     return
                 }
@@ -64,7 +66,7 @@ const store = {
         });
     },
     saveLink: function (data) {
-
+console.log(read.formStatus)
         //Check if you are adding new link
         if (read.formStatus == 'new') {
             chrome.storage.sync.get('link', (result) => {
@@ -74,7 +76,7 @@ const store = {
                     middleware.info('Title already exist')
                     return
                 }
-                // final = (typeof resultLink == 'undefined') ? data[0] : Object.assign(resultLink, data[0]);
+ 
                 final = helper.collectiveLink(resultLink, data[0])
                 store.setLink(final);
 
@@ -90,8 +92,7 @@ const store = {
                 //does title exist
                 if (typeof resultLink == 'object') {
                     delete resultLink[read.currentLinkKey];
-
-                    // final = (typeof resultLink == 'undefined') ? data[0] : Object.assign(resultLink, data[0]);
+ 
                     final = helper.collectiveLink(resultLink, data[0])
                     store.setLink(final);
 
@@ -116,20 +117,16 @@ const store = {
 }
 const update = {
     confirmUpdate: () => {
-
         UI.showList();
-
         domData.loadSearch()
-
-
     }
 }
 
 const api = {
     // retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
     // syncEndpoint: 'http://localhost/landing-page/api/add-link.php',
-    retrieveEndpoint: 'https://businesstosales.com/api/retrieve-link.php',
-    syncEndpoint: 'https://businesstosales.com/api/add-link.php',
+    retrieveEndpoint: 'https://businesstosales.com/test-api/retrieve-link.php',
+    syncEndpoint: 'https://businesstosales.com/test-api/add-link.php',
     syncRequest: function (response) {
         let syncFetch = this.syncFetch
         let prepareSyncRequest = this.prepareSyncRequest
@@ -509,7 +506,7 @@ UI.cloud.retrieve.addEventListener('click', () => {
         })
     }
 })
-
+// chrome.storage.sync.remove('user')
 //logout section
 // UI.cloud.logout.addEventListener('click', () => {
 //     chrome.storage.sync.remove('user')
@@ -554,7 +551,7 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
         let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`)
         if (prev != null)
             prev.removeAttribute('selected')
-
+console.log(collect)
         UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected = true
 
         prev = UI.form.saveLink.selectStatus.querySelector(`option[selected=select]`)

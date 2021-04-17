@@ -271,7 +271,7 @@ tr.bodyListRow:nth-of-type(even) {
 .singIcon {
     position: relative;
     top: 15px;
-    right: 11rem;
+    right: 12rem;
     line-height: 0.9;
     cursor: pointer;
     display: none;
