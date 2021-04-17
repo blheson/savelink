@@ -4,7 +4,7 @@ const background = {
 
       notificationDate = parseInt(result.notify);
 
-      if (helper.futureDate == 0) helper.setFutureDate(1)
+      if (helper.futureDate == 0) helper.setFutureDate(1);
 
       //Only make alert once a day
       if (notificationDate < (new Date()).getTime()) {//check for expirelinks
@@ -12,10 +12,10 @@ const background = {
           read.syncLinks();
         //allow link syncing before making notification
         setTimeout(() => {
-          let listCount = Object.keys(listener.expire()).length
+          let listCount = Object.keys(listener.expire()).length;
           if (listCount > 0) {
 
-            chrome.storage.sync.set({ notify: helper.futureDate })
+            chrome.storage.sync.set({ notify: helper.futureDate });
 
             chrome.notifications.create('error', {
               type: 'basic',
@@ -25,28 +25,28 @@ const background = {
             })
           }
 
-        }, 1000)
+        }, 1000);
       }
     })
 
   },
   contextMenu: {
     create: function (contextMenu, callback = null) {
-   
       chrome.contextMenus.removeAll(() => {
-          chrome.contextMenus.create(contextMenu, callback)
-      })
+        chrome.contextMenus.create(contextMenu, callback);
+      });
     },
     parseLinkData: (tabs) => {
       let link = tabs[0].url.length > 1 ? tabs[0].url : '';
+
       if (link == '') {
-        return;
+        return [null, link];
       }
       //create an alert for no link here
-      let title = helper.parseTitle(tabs[0].title)
+      let title = helper.parseTitle(tabs[0].title);
 
-      let collection = 'contextmenu'
-      let status = 'urgent'
+      let collection = 'contextmenu';
+      let status = 'urgent';
       let expire_at = helper.parseDate(helper.getFutureDate(2));
 
       let data = {};
@@ -57,7 +57,9 @@ const background = {
         status,
         title
       };
-      return [data, title]
+
+
+      return [data, title];
     },
     click: function () {
       chrome.contextMenus.onClicked.addListener(() => {
@@ -67,9 +69,20 @@ const background = {
           'windowId': chrome.windows.WINDOW_ID_CURRENT
         },
           function (tabs) {
+            let data, title;
 
-            [data, title] = background.contextMenu.parseLinkData(tabs)
 
+            // console.log(background.contextMenu.parseLinkData(tabs))
+            [data, title] = background.contextMenu.parseLinkData(tabs);
+            if (title == '') {
+              chrome.notifications.create('error', {
+                type: 'basic',
+                title: 'Notification',
+                message: 'No link found, please save manually, or wait for page to completely load',
+                iconUrl: 'assets/img/blim32.png'
+              })
+              return
+            }
             if (!/^(http)/.test(tabs[0].url)) {
               chrome.notifications.create('error', {
                 type: 'basic',
@@ -77,16 +90,16 @@ const background = {
                 message: 'Invalid Url',
                 iconUrl: 'assets/img/blim32.png'
               })
-              return
+              return;
             }
-            if(title.length < 1){
+            if (title.length < 1) {
               chrome.notifications.create('error', {
                 type: 'basic',
                 title: 'Notification',
                 message: 'Page does not have title, Please insert manually',
                 iconUrl: 'assets/img/blim32.png'
               })
-              return
+              return;
             }
 
             chrome.storage.sync.get('link', (result) => {
@@ -99,10 +112,10 @@ const background = {
                   message: 'Link already exists',
                   iconUrl: 'assets/img/blim32.png'
                 })
-                return
+                return;
               }
 
-              final = helper.collectiveLink(resultLink, data)
+              final = helper.collectiveLink(resultLink, data);
 
               chrome.storage.sync.set({ link: final });
 
@@ -111,7 +124,7 @@ const background = {
                 title: 'Success',
                 message: 'Link is successfully saved',
                 iconUrl: 'assets/img/blim32.png'
-              })
+              });
             })
 
           }
@@ -123,16 +136,16 @@ const background = {
     activated: function () {
       chrome.tabs.onActivated.addListener(() => {
         read.syncLinks();
-        domData.setBadgeState()
+        domData.setBadgeState();
       })
     }
   },
   runtime: {
-    onInstalled: function() {
- 
-      background.contextMenu.create({ 'id': 'addLink', 'title': 'Add URL' })
+    onInstalled: function () {
+
+      background.contextMenu.create({ 'id': 'addLink', 'title': 'Add URL' });
       chrome.runtime.onInstalled.addListener(function () {
-        chrome.storage.sync.set({ notify: helper.setFutureDate() })
+        chrome.storage.sync.set({ notify: helper.setFutureDate() });
         chrome.storage.sync.get('collection', function (result) {
           if (result.collection == null) {
             chrome.storage.sync.set({ collection: ['blog', 'finance', 'contextmenu'] });
@@ -153,7 +166,7 @@ const background = {
       })
     }
   },
-  init: function() {
+  init: function () {
 
     this.contextMenu.click();
     this.tab.activated();
@@ -162,4 +175,6 @@ const background = {
     this.notification();
   }
 }
-background.init()
+background.init();
+
+ 

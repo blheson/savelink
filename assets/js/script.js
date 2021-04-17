@@ -66,7 +66,7 @@ const store = {
         });
     },
     saveLink: function (data) {
-console.log(read.formStatus)
+ 
         //Check if you are adding new link
         if (read.formStatus == 'new') {
             chrome.storage.sync.get('link', (result) => {
@@ -93,13 +93,13 @@ console.log(read.formStatus)
                 if (typeof resultLink == 'object') {
                     delete resultLink[read.currentLinkKey];
  
-                    final = helper.collectiveLink(resultLink, data[0])
+                    final = helper.collectiveLink(resultLink, data[0]);
                     store.setLink(final);
 
-                    middleware.info('Link updated successfully', 'success')
-                    read.formStatus = 'new'
-                    read.allLinks = final
-                    domData.setBadgeState()
+                    middleware.info('Link updated successfully', 'success');
+                    read.formStatus = 'new';
+                    read.allLinks = final;
+                    domData.setBadgeState();
                 }
             })
         }
@@ -118,7 +118,7 @@ console.log(read.formStatus)
 const update = {
     confirmUpdate: () => {
         UI.showList();
-        domData.loadSearch()
+        domData.loadSearch();
     }
 }
 
@@ -128,17 +128,17 @@ const api = {
     retrieveEndpoint: 'https://businesstosales.com/test-api/retrieve-link.php',
     syncEndpoint: 'https://businesstosales.com/test-api/add-link.php',
     syncRequest: function (response) {
-        let syncFetch = this.syncFetch
-        let prepareSyncRequest = this.prepareSyncRequest
+        let syncFetch = this.syncFetch;
+        let prepareSyncRequest = this.prepareSyncRequest;
         chrome.storage.sync.get(['link', 'collection'], (result) => {
             let link = JSON.stringify(result.link);
             if (typeof link === 'undefined' || Object.keys(result.link).length < 1) {
                 middleware.info('No link available', 'error');
-                UI.waitCloudResponse(false)
+                UI.waitCloudResponse(false);
 
                 return true;
             }
-            let request = prepareSyncRequest(link, result.collection, response.message)
+            let request = prepareSyncRequest(link, result.collection, response.message);
             syncFetch(request);
         });
 
@@ -172,12 +172,12 @@ const api = {
             if (result.error) throw new Error(result.message);
 
             middleware.info(result.message, 'success');
-            UI.waitCloudResponse(false)
+            UI.waitCloudResponse(false);
 
         }).catch(error => {
-            if (error == 'TypeError: Failed to fetch') error = 'No internet connection'
+            if (error == 'TypeError: Failed to fetch') error = 'Something went wrong';
             middleware.info(error, 'error');
-            UI.waitCloudResponse(false)
+            UI.waitCloudResponse(false);
         });
     },
     retrieveFetch: (request) => {
@@ -202,13 +202,13 @@ const api = {
             store.setLink(link);
             middleware.info('retrieve successful', 'success');
             domData.linkList();//reload table
-            UI.waitCloudResponse(false)
+            UI.waitCloudResponse(false);
         }).catch((error) => {
 
             if (error == 'TypeError: Failed to fetch')
-                error = 'No internet connection'
+                error = 'No internet connection';
             middleware.info(error, 'error');
-            UI.waitCloudResponse(false)
+            UI.waitCloudResponse(false);
         });
         return true;
     },
@@ -223,7 +223,7 @@ const api = {
             },
             body: fd
         });
-        return this.retrieveFetch(request)
+        return this.retrieveFetch(request);
     }
 }
 
@@ -231,10 +231,10 @@ const api = {
 const UI = {
     displayExpireDate: function () {
         if (this.form.saveLink.selectStatus.value.toLowerCase() == 'later') {
-            this.form.saveLink.expireBox.style.display = 'none'
+            this.form.saveLink.expireBox.style.display = 'none';
             return
         }
-        this.form.saveLink.expireBox.style.display = ''
+        this.form.saveLink.expireBox.style.display = '';
     },
     body: document.querySelector('body'),
     searchInput: document.querySelector("input[name=search]"),
@@ -245,31 +245,31 @@ const UI = {
     showList: function () {
         this.page.linkTable.style.display = "block";
         this.page.linkForm.style.display = "none";
-        this.searchInput.classList.remove('d-none')
-        document.querySelector(".navBtn.active").classList.remove('active')
-        this.menuBtn.showList.classList.add('active')
+        this.searchInput.classList.remove('d-none');
+        document.querySelector(".navBtn.active").classList.remove('active');
+        this.menuBtn.showList.classList.add('active');
     },
     waitCloudResponse: function (status) {
         let span;
         if (status) {
             span = document.createElement('span');
 
-            span.classList.add('cloud-loading')
-            this.cloudLogBox.appendChild(span)
+            span.classList.add('cloud-loading');
+            this.cloudLogBox.appendChild(span);
             this.cloudLogMenu.style.display = 'none';
-            span.innerText = 'Expecting response...'
-            let i = 0
+            span.innerText = 'Expecting response...';
+            let i = 0;
             setInterval(function () {
                 if (i > funMessages.length - 1)
-                    i = 0
-                span.innerText = funMessages[i]
+                    i = 0;
+                span.innerText = funMessages[i];
 
-                i++
-            }, 3000)
+                i++;
+            }, 3000);
 
         } else {
-            span = document.querySelector('.cloud-loading')
-            this.cloudLogBox.removeChild(span)
+            span = document.querySelector('.cloud-loading');
+            this.cloudLogBox.removeChild(span);
             this.cloudLogMenu.style.display = '';
         }
 
@@ -329,10 +329,10 @@ const UI = {
         if ('block' == pop.style.display)
             pop.style.display = 'none';
         else
-            pop.style.display = 'block'
+            pop.style.display = 'block';
     },
     popWarn: (warn) => {
-        let warnDom = document.querySelector('.warn')
+        let warnDom = document.querySelector('.warn');
         if ('none' == warnDom.style.display) {
             warnDom.style.display = 'block';
             warnDom.querySelector('.warntext').innerText = warn;
@@ -349,8 +349,8 @@ const processForm = (link) => {
     let collection = linkForm.querySelector("select[name=collection]").value;
     let title = linkForm.querySelector("input[name=title]").value;
     let status = linkForm.querySelector("select[name=status]").value;
-    let isLinkStatusLater = status.toLowerCase() == 'later'
-    let expire_at = isLinkStatusLater ? '-' : linkForm.querySelector("input[name=expireAt]").value
+    let isLinkStatusLater = status.toLowerCase() == 'later';
+    let expire_at = isLinkStatusLater ? '-' : linkForm.querySelector("input[name=expireAt]").value;
 
 
     //link validation 
@@ -390,8 +390,9 @@ UI.notification.info.addEventListener('click', (e) => {
 UI.form.saveLink.submitBtn.addEventListener('click', () => {
     if (read.formStatus == 'edit')
         UI.notification.info.innerText = '';
+      
     if (/^(chrome:)/.test(read.newLink)) {
-        middleware.info('The URL is invalid')
+        middleware.info('The URL is invalid');
         return
     }
 
@@ -411,9 +412,9 @@ UI.menuBtn.showList.addEventListener("click", () => {
     UI.notification.info.innerText = '';
     read.formStatus = 'new'
     // UI.form.linkPreview.innerText = read.newLink
-    UI.form.linkPreview.value = read.newLink
-    UI.form.saveLink.titleInput.value = ''
-    UI.form.saveLink.titleInput.disabled = false
+    UI.form.linkPreview.value = read.newLink;
+    UI.form.saveLink.titleInput.value = '';
+    UI.form.saveLink.titleInput.disabled = false;
 
 })
 
@@ -431,9 +432,9 @@ UI.menuBtn.saveLink.addEventListener("click", () => {
 UI.linkTable.clearLink.addEventListener("click", () => {
     if (confirm("DELETE ALL LINKS?")) {
         chrome.storage.sync.remove('link', function () {
-            read.allLinks = []
+            read.allLinks = [];
             domData.linkList();
-            domData.setBadgeState()
+            domData.setBadgeState();
         });
     }
 })
@@ -460,17 +461,17 @@ UI.collection.submitBtn.addEventListener('click', () => {
         store.saveCollection(lowCase);
         setTimeout(() => {
 
-            let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`)
+            let collectOption = UI.form.saveLink.selectCollection.querySelector(`option[value='${lowCase}']`);
             collectOption.selected = true;
 
         }, 100);
     } else {
-        middleware.info('Select a proper collection name')
+        middleware.info('Select a proper collection name');
     }
 })
 //Sync Section
 UI.cloud.sync.addEventListener('click', () => {
-    if (confirm('Sync will add your locally saved data to a third party storage system for backup')) {
+    if (confirm('WARNING: Sync will add your locally saved data to a third party storage system for backup and overwrite previously saved links')) {
         UI.waitCloudResponse(true)
         chrome.runtime.sendMessage({
             message: 'check_status'
@@ -478,8 +479,7 @@ UI.cloud.sync.addEventListener('click', () => {
        
             if (chrome.runtime.lastError || response.error) {
                 middleware.info(response.message, 'error');
-                UI.waitCloudResponse(false)
-
+                UI.waitCloudResponse(false);
                 return;
             }
             api.syncRequest(response);
@@ -491,15 +491,15 @@ UI.cloud.sync.addEventListener('click', () => {
 })
 // retrieve section
 UI.cloud.retrieve.addEventListener('click', () => {
-    if (confirm('Retrieving from a third party cloud backup will overwrite your current locally saved information?')) {
-        UI.waitCloudResponse(true)
+    if (confirm('WARNING:Retrieving data from backup will overwrite your current locally saved links?')) {
+        UI.waitCloudResponse(true);
 
         chrome.runtime.sendMessage({
             message: 'check_status'
         }, (response) => {
             if (response.error) {
                 middleware.info(response.message, 'error');
-                UI.waitCloudResponse(false)
+                UI.waitCloudResponse(false);
                 return;
             }
             api.retrieveRequest(response);
@@ -529,7 +529,7 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
             read.allLinks = link;
             domData.setBadgeState();
             //make only search result show
-            domData.loadSearch()
+            domData.loadSearch();
         })
     }
     /**
@@ -543,24 +543,26 @@ UI.linkTable.tBody.addEventListener('click', (e) => {
 
         UI.backToForm();
         // UI.form.linkPreview.innerText = link
-        UI.form.linkPreview.value = link
-        UI.form.saveLink.titleInput.value = tit
-        read.currentLinkKey = tit
+        // read.newLink = link
+        UI.form.linkPreview.value =read.newLink = link;
+      
+        UI.form.saveLink.titleInput.value = tit;
+        read.currentLinkKey = tit;
         // UI.form.saveLink.titleInput.disabled = true
 
-        let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`)
+        let prev = UI.form.saveLink.selectCollection.querySelector(`option[selected=select]`);
         if (prev != null)
-            prev.removeAttribute('selected')
-console.log(collect)
-        UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected = true
+            prev.removeAttribute('selected');
+ 
+        UI.form.saveLink.selectCollection.querySelector(`option[value='${collect}']`).selected = true;
 
-        prev = UI.form.saveLink.selectStatus.querySelector(`option[selected=select]`)
+        prev = UI.form.saveLink.selectStatus.querySelector(`option[selected=select]`);
         if (prev != null)
-            prev.removeAttribute('selected')
+            prev.removeAttribute('selected');
 
-        UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected = true
+        UI.form.saveLink.selectStatus.querySelector(`option[value=${status}]`).selected = true;
 
-        read.formStatus = 'edit'
+        read.formStatus = 'edit';
 
         UI.form.saveLink.expireInput.value = expire;
 
@@ -585,4 +587,4 @@ UI.form.saveLink.selectStatus.addEventListener('change', () => {
 })
 
 
-init()
+init();
