@@ -102,6 +102,9 @@ const helper = {
 
         return title
     }
+    ,
+    checkValidLink: link => !/^(http)/.test(link)
+
 }
 
 /**
@@ -198,7 +201,7 @@ const domData = {
     }
     ,
     collectionOption: function () {
-        chrome.storage.sync.get('collection', ({collection}) => {
+        chrome.storage.sync.get('collection', ({ collection }) => {
             let resultCollection = collection
 
             if (typeof resultCollection == 'undefined' || resultCollection.length < 1) {
@@ -296,6 +299,7 @@ const domData = {
         a.innerText = result[key].title;
         a.classList.add('singTitle');
         a.setAttribute("target", "_blank");
+        a.title = result[key].link
         template.querySelector(".singLink").appendChild(a);
         template.querySelector(".singCollection").innerText = result[key].collection;
         template.querySelector(".singStatus").innerText = result[key].status;

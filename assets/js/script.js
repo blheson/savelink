@@ -125,8 +125,8 @@ const update = {
 const api = {
     // retrieveEndpoint: 'http://localhost/landing-page/api/retrieve-link.php',
     // syncEndpoint: 'http://localhost/landing-page/api/add-link.php',
-    retrieveEndpoint: 'https://businesstosales.com/test-api/retrieve-link.php',
-    syncEndpoint: 'https://businesstosales.com/test-api/add-link.php',
+    retrieveEndpoint: 'https://businesstosales.com/api/retrieve-link.php',
+    syncEndpoint: 'https://businesstosales.com/api/add-link.php',
     syncRequest: function (response) {
         let syncFetch = this.syncFetch;
         let prepareSyncRequest = this.prepareSyncRequest;
@@ -390,12 +390,16 @@ UI.notification.info.addEventListener('click', (e) => {
 UI.form.saveLink.submitBtn.addEventListener('click', () => {
     if (read.formStatus == 'edit')
         UI.notification.info.innerText = '';
-      
-    if (/^(chrome:)/.test(read.newLink)) {
+        console.log(read.newLink)
+    read.newLink = UI.form.linkPreview.value
+
+    // if (/^(chrome:)/.test(read.newLink)) {
+        if (helper.checkValidLink(read.newLink)) {
+        
         middleware.info('The URL is invalid');
         return
     }
-
+ 
     let newData = processForm(read.newLink);
 
     (typeof newData == 'object') ?

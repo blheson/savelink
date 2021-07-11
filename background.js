@@ -1,13 +1,13 @@
 const background = {
   notification: () => {
-    chrome.storage.sync.get('notify', (result) => {
+    chrome.storage.sync.get('notify', ({ notify }) => {
 
-      notificationDate = parseInt(result.notify);
-
+      notificationDate = parseInt(notify);
       if (helper.futureDate == 0) helper.setFutureDate(1);
 
       //Only make alert once a day
       if (notificationDate < (new Date()).getTime()) {//check for expirelinks
+        // helper.setFutureDate(1);
         if (Object.keys(read.allLinks).length < 1)
           read.syncLinks();
         //allow link syncing before making notification
@@ -39,8 +39,8 @@ const background = {
     parseLinkData: (tabs) => {
       let link = tabs[0].url.length > 1 ? tabs[0].url : '';
 
-      if (link == '') {
-        return [null, link];
+      if (link == '' || link == 'loading...') {
+        return [null, ''];
       }
       //create an alert for no link here
       let title = helper.parseTitle(tabs[0].title);
@@ -83,7 +83,8 @@ const background = {
               })
               return
             }
-            if (!/^(http)/.test(tabs[0].url)) {
+            // if (!/^(http)/.test(tabs[0].url)) {
+            if (helper.checkValidLink(tabs[0].url)) {
               chrome.notifications.create('error', {
                 type: 'basic',
                 title: 'Notification',
@@ -135,6 +136,7 @@ const background = {
   tab: {
     activated: function () {
       chrome.tabs.onActivated.addListener(() => {
+        background.notification();
         read.syncLinks();
         domData.setBadgeState();
       })
@@ -162,19 +164,15 @@ const background = {
           auth.sendSignInRequest(sendResponse);
         }
         return true;
-
       })
     }
   },
   init: function () {
-
     this.contextMenu.click();
     this.tab.activated();
     this.runtime.onInstalled();
     this.runtime.onMessage();
-    this.notification();
+
   }
 }
 background.init();
-
- 
